@@ -1042,58 +1042,276 @@ const AdminAllCases = () => {
 const AdminRules = () => {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [showPdfUpload, setShowPdfUpload] = useState(false);
   const [formData, setFormData] = useState({ rule_version: "", rule_text: "", keywords: "" });
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfVersion, setPdfVersion] = useState("");
+  const [pdfKeywords, setPdfKeywords] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const { token } = useAuth();
   const { t } = useLanguage();
 
   useEffect(() => { fetchRules(); }, []);
 
   const fetchRules = async () => {
-    try { const response = await axios.get(`${API}/warranty-rules`, { headers: { Authorization: `Bearer ${token}` } }); setRules(response.data); } catch (error) { console.error("Error:", error); } finally { setLoading(false); }
+    try { 
+      const response = await axios.get(`${API}/warranty-rules`, { headers: { Authorization: `Bearer ${token}` } }); 
+      setRules(response.data); 
+    } catch (error) { 
+      console.error("Error:", error); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const createRule = async (e) => {
     e.preventDefault();
-    await axios.post(`${API}/warranty-rules`, { rule_version: formData.rule_version, rule_text: formData.rule_text, keywords: formData.keywords.split(",").map(k => k.trim()).filter(k => k) }, { headers: { Authorization: `Bearer ${token}` } });
-    setShowForm(false); setFormData({ rule_version: "", rule_text: "", keywords: "" }); fetchRules();
+    await axios.post(`${API}/warranty-rules`, { 
+      rule_version: formData.rule_version, 
+      rule_text: formData.rule_text, 
+      keywords: formData.keywords.split(",").map(k => k.trim()).filter(k => k) 
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    setShowManualForm(false); 
+    setFormData({ rule_version: "", rule_text: "", keywords: "" }); 
+    fetchRules();
   };
 
-  const deleteRule = async (ruleId) => { if (!window.confirm(t("delete") + "?")) return; await axios.delete(`${API}/warranty-rules/${ruleId}`, { headers: { Authorization: `Bearer ${token}` } }); fetchRules(); };
+  const uploadPdf = async (e) => {
+    e.preventDefault();
+    if (!pdfFile || !pdfVersion) return;
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", pdfFile);
+      formData.append("rule_version", pdfVersion);
+      formData.append("keywords", pdfKeywords);
+      
+      await axios.post(`${API}/warranty-rules/upload-pdf`, formData, { 
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          "Content-Type": "multipart/form-data" 
+        } 
+      });
+      
+      setShowPdfUpload(false);
+      setPdfFile(null);
+      setPdfVersion("");
+      setPdfKeywords("");
+      fetchRules();
+      alert(t("ruleUploaded"));
+    } catch (error) {
+      alert(t("error") + ": " + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toggleActive = async (ruleId) => { 
+    await axios.patch(`${API}/warranty-rules/${ruleId}/toggle-active`, {}, { headers: { Authorization: `Bearer ${token}` } }); 
+    fetchRules(); 
+  };
+
+  const deleteRule = async (ruleId) => { 
+    if (!window.confirm(t("delete") + "?")) return; 
+    await axios.delete(`${API}/warranty-rules/${ruleId}`, { headers: { Authorization: `Bearer ${token}` } }); 
+    fetchRules(); 
+  };
+
+  const filteredRules = activeTab === "active" ? rules.filter(r => r.is_active) : rules;
 
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-rules-title">{t("warrantyRules")}</h1>
-        <Button onClick={() => setShowForm(!showForm)}><Plus className="w-4 h-4 mr-2" />{t("save")}</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setShowPdfUpload(true); setShowManualForm(false); }}>
+            <Upload className="w-4 h-4 mr-2" />{t("uploadPdf")}
+          </Button>
+          <Button onClick={() => { setShowManualForm(true); setShowPdfUpload(false); }}>
+            <Plus className="w-4 h-4 mr-2" />{t("addManually")}
+          </Button>
+        </div>
       </div>
 
-      {showForm && (
-        <Card className="mb-6"><CardHeader><CardTitle>{t("warrantyRules")}</CardTitle></CardHeader><CardContent>
-          <form onSubmit={createRule} className="space-y-4">
-            <div><Label>Version</Label><Input value={formData.rule_version} onChange={(e) => setFormData({...formData, rule_version: e.target.value})} required placeholder="1.0" /></div>
-            <div><Label>{t("content")}</Label><textarea className="w-full p-2 border rounded-md min-h-[100px] bg-background" value={formData.rule_text} onChange={(e) => setFormData({...formData, rule_text: e.target.value})} required /></div>
-            <div><Label>{t("metaKeywords")}</Label><Input value={formData.keywords} onChange={(e) => setFormData({...formData, keywords: e.target.value})} placeholder={t("metaKeywordsHelp")} /></div>
-            <div className="flex gap-2"><Button type="submit">{t("save")}</Button><Button type="button" variant="outline" onClick={() => setShowForm(false)}>{t("cancel")}</Button></div>
-          </form>
-        </CardContent></Card>
+      {/* PDF Upload Form */}
+      {showPdfUpload && (
+        <Card className="mb-6 border-primary/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              {t("uploadWarrantyPdf")}
+            </CardTitle>
+            <CardDescription>{t("uploadWarrantyPdfDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={uploadPdf} className="space-y-4">
+              <div>
+                <Label>{t("ruleVersion")} *</Label>
+                <Input 
+                  value={pdfVersion} 
+                  onChange={(e) => setPdfVersion(e.target.value)} 
+                  required 
+                  placeholder="2.0" 
+                />
+              </div>
+              <div>
+                <Label>{t("selectPdfFile")} *</Label>
+                <Input 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={(e) => setPdfFile(e.target.files[0])} 
+                  required 
+                  className="cursor-pointer"
+                />
+                {pdfFile && (
+                  <p className="text-sm text-green-600 mt-1">
+                    <FileText className="w-4 h-4 inline mr-1" />
+                    {pdfFile.name}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label>{t("metaKeywords")}</Label>
+                <Input 
+                  value={pdfKeywords} 
+                  onChange={(e) => setPdfKeywords(e.target.value)} 
+                  placeholder={t("metaKeywordsHelp")} 
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={uploading}>
+                  {uploading ? t("loading") : t("uploadPdf")}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowPdfUpload(false)}>
+                  {t("cancel")}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      {loading ? <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div> : (
-        <div className="space-y-4">
-          {rules.map(rule => (
-            <Card key={rule.id}><CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2"><Badge>v{rule.rule_version}</Badge><span className="text-xs text-gray-500">{new Date(rule.created_at).toLocaleDateString('tr-TR')}</span></div>
-                  <p className="text-sm">{rule.rule_text}</p>
-                  {rule.keywords?.length > 0 && <div className="flex gap-1 flex-wrap">{rule.keywords.map((k, i) => (<Badge key={i} variant="outline" className="text-xs">{k}</Badge>))}</div>}
-                </div>
-                <Button size="sm" variant="destructive" onClick={() => deleteRule(rule.id)}><Trash2 className="w-4 h-4" /></Button>
+      {/* Manual Form */}
+      {showManualForm && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>{t("addManually")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={createRule} className="space-y-4">
+              <div>
+                <Label>{t("ruleVersion")} *</Label>
+                <Input 
+                  value={formData.rule_version} 
+                  onChange={(e) => setFormData({...formData, rule_version: e.target.value})} 
+                  required 
+                  placeholder="1.0" 
+                />
               </div>
-            </CardContent></Card>
+              <div>
+                <Label>{t("ruleText")} *</Label>
+                <Textarea 
+                  className="min-h-[150px]" 
+                  value={formData.rule_text} 
+                  onChange={(e) => setFormData({...formData, rule_text: e.target.value})} 
+                  required 
+                  placeholder="Garanti kuralları metni..."
+                />
+              </div>
+              <div>
+                <Label>{t("metaKeywords")}</Label>
+                <Input 
+                  value={formData.keywords} 
+                  onChange={(e) => setFormData({...formData, keywords: e.target.value})} 
+                  placeholder={t("metaKeywordsHelp")} 
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit">{t("save")}</Button>
+                <Button type="button" variant="outline" onClick={() => setShowManualForm(false)}>
+                  {t("cancel")}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="all">{t("allRulesTab")} ({rules.length})</TabsTrigger>
+          <TabsTrigger value="active">{t("activeRules")} ({rules.filter(r => r.is_active).length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredRules.map(rule => (
+            <Card key={rule.id} className={!rule.is_active ? "opacity-60" : ""}>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge>v{rule.rule_version}</Badge>
+                      <Badge variant={rule.source_type === "pdf" ? "secondary" : "outline"}>
+                        {rule.source_type === "pdf" ? (
+                          <><FileText className="w-3 h-3 mr-1" />{t("pdf")}</>
+                        ) : (
+                          <><Edit className="w-3 h-3 mr-1" />{t("manual")}</>
+                        )}
+                      </Badge>
+                      <Badge variant={rule.is_active ? "default" : "destructive"}>
+                        {rule.is_active ? t("active") : t("inactive")}
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {new Date(rule.created_at).toLocaleDateString('tr-TR')}
+                      </span>
+                    </div>
+                    {rule.source_filename && (
+                      <p className="text-xs text-gray-500">
+                        <FileText className="w-3 h-3 inline mr-1" />
+                        {rule.source_filename}
+                      </p>
+                    )}
+                    <p className="text-sm line-clamp-3">{rule.rule_text}</p>
+                    {rule.keywords?.length > 0 && (
+                      <div className="flex gap-1 flex-wrap">
+                        {rule.keywords.map((k, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">{k}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => toggleActive(rule.id)}
+                      title={t("toggleActiveStatus")}
+                    >
+                      {rule.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deleteRule(rule.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
-          {rules.length === 0 && <Card><CardContent className="p-8 text-center text-gray-500">{t("noRules")}</CardContent></Card>}
+          {filteredRules.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">{t("noRules")}</CardContent>
+            </Card>
+          )}
         </div>
       )}
     </AdminLayout>
