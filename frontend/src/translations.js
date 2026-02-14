@@ -330,10 +330,25 @@ export const translations = {
     warrantyRules: "Warranty Rules",
     apiSettings: "API Settings",
     siteSettings: "Site Settings",
+    emailSettings: "Email Settings",
     uploadIze: "Upload IZE",
     myAnalyses: "My Analyses",
     darkMode: "Dark Mode",
     lightMode: "Light Mode",
+    
+    // Email Settings
+    smtpSettings: "SMTP Settings",
+    smtpHost: "SMTP Server",
+    smtpPort: "SMTP Port",
+    smtpUser: "SMTP User",
+    smtpPassword: "SMTP Password",
+    senderName: "Sender Name",
+    senderEmail: "Sender Email",
+    emailEnabled: "Email Notification Enabled",
+    testConnection: "Test Connection",
+    testConnectionSuccess: "SMTP connection successful",
+    testConnectionFailed: "SMTP connection failed",
+    emailSettingsDesc: "SMTP settings for sending analysis results via email",
     
     // Admin Panel
     adminPanel: "Admin Panel",
