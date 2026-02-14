@@ -32,8 +32,11 @@ services:
       - ize-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`) && PathPrefix(`/api`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=8001"
+      - "traefik.http.routers.ize-backend.rule=Host(`api.visupanel.com`)"
+      - "traefik.http.routers.ize-backend.entrypoints=https"
+      - "traefik.http.routers.ize-backend.tls=true"
+      - "traefik.http.routers.ize-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ize-backend.loadbalancer.server.port=8001"
 
   # Frontend
   frontend:
@@ -41,7 +44,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_BACKEND_URL=https://${BACKEND_DOMAIN}
+        - REACT_APP_BACKEND_URL=https://api.visupanel.com
     container_name: ize-frontend
     restart: unless-stopped
     depends_on:
@@ -50,12 +53,16 @@ services:
       - ize-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.ize-frontend.rule=Host(`ize.visupanel.com`)"
+      - "traefik.http.routers.ize-frontend.entrypoints=https"
+      - "traefik.http.routers.ize-frontend.tls=true"
+      - "traefik.http.routers.ize-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ize-frontend.loadbalancer.server.port=80"
 
 volumes:
   mongodb_data:
 
 networks:
   ize-network:
-    driver: bridge
+    external: true
+    name: coolify

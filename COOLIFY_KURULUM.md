@@ -1,15 +1,30 @@
-# IZE Case Resolver - Coolify Kurulum Rehberi
+# IZE Case Resolver - Coolify Kurulum Rehberi (visupanel.com)
 
-## Ön Gereksinimler
-- Coolify paneline erişim
-- Bir domain (örn: yourdomain.com)
-- Emergent LLM Key
+## Domain Yapılandırması
+
+| Servis | Domain | Açıklama |
+|--------|--------|----------|
+| Frontend | `ize.visupanel.com` | Ana uygulama |
+| Backend | `api.visupanel.com` | API servisi |
 
 ---
 
-## Adım 1: GitHub'a Push
+## Adım 1: DNS Ayarları
 
-Önce bu projeyi GitHub'a yükleyin:
+Cloudflare veya domain sağlayıcınızda A kayıtları ekleyin:
+
+```
+ize.visupanel.com   →  SUNUCU_IP  (Proxy: OFF veya DNS Only)
+api.visupanel.com   →  SUNUCU_IP  (Proxy: OFF veya DNS Only)
+```
+
+> ⚠️ Coolify SSL sertifikası alacağı için Cloudflare proxy'yi kapatın veya Full (Strict) SSL kullanın.
+
+---
+
+## Adım 2: GitHub'a Push
+
+Projeyi GitHub'a yükleyin:
 ```bash
 git init
 git add .
@@ -20,70 +35,43 @@ git push -u origin main
 
 ---
 
-## Adım 2: Coolify'da Proje Oluşturma
+## Adım 3: Coolify'da Proje Oluşturma
 
 1. Coolify paneline giriş yapın
-2. **"+ Add Resource"** butonuna tıklayın
-3. **"Docker Compose"** seçin
-4. GitHub repo'nuzu bağlayın
+2. **"+ Add Resource"** → **"Docker Compose"** seçin
+3. GitHub repo'nuzu bağlayın
+4. **Branch:** `main`
+5. **Docker Compose Location:** `docker-compose.yml`
 
 ---
 
-## Adım 3: Environment Variables
+## Adım 4: Environment Variables
 
-Coolify'da şu environment variable'ları ekleyin:
+Coolify'da şu değişkenleri ekleyin:
 
-| Variable | Değer | Açıklama |
-|----------|-------|----------|
-| `EMERGENT_LLM_KEY` | `sk-emergent-xxx` | AI analiz için |
-| `BACKEND_DOMAIN` | `api.ize.yourdomain.com` | Backend domain |
-| `FRONTEND_DOMAIN` | `ize.yourdomain.com` | Frontend domain |
-| `JWT_SECRET_KEY` | `rastgele-guclu-bir-key` | Güvenlik için |
-
----
-
-## Adım 4: Domain Ayarları
-
-Coolify'da her servis için domain ekleyin:
-
-### Backend:
-- Domain: `api.ize.yourdomain.com`
-- Port: `8001`
-- SSL: ✅ Enable
-
-### Frontend:
-- Domain: `ize.yourdomain.com`
-- Port: `80`
-- SSL: ✅ Enable
-
----
-
-## Adım 5: DNS Ayarları
-
-Domain sağlayıcınızda A kayıtları ekleyin:
-
-```
-api.ize.yourdomain.com  →  SUNUCU_IP
-ize.yourdomain.com      →  SUNUCU_IP
+```env
+EMERGENT_LLM_KEY=sk-emergent-xxx
+JWT_SECRET_KEY=guclu-rastgele-bir-anahtar-olusturun
 ```
 
 ---
 
-## Adım 6: Deploy
+## Adım 5: Deploy
 
-1. Coolify'da **"Deploy"** butonuna tıklayın
-2. Build loglarını takip edin
-3. Başarılı olduğunda uygulamaya erişin
+1. **"Deploy"** butonuna tıklayın
+2. Build loglarını takip edin (~5-10 dakika)
+3. Başarılı olduğunda:
+   - Frontend: https://ize.visupanel.com
+   - API: https://api.visupanel.com/api/
 
 ---
 
-## İlk Admin Kullanıcı Oluşturma
+## Adım 6: İlk Admin Oluşturma
 
-Deploy sonrası terminal ile admin oluşturun:
+Deploy sonrası Coolify'da terminal açın veya SSH ile bağlanın:
 
 ```bash
-# Coolify'da backend container'a bağlanın
-docker exec -it ize-backend python3 -c "
+docker exec -it ize-backend python3 << 'EOF'
 from pymongo import MongoClient
 from passlib.context import CryptContext
 import uuid
@@ -95,7 +83,7 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 admin = {
     'id': str(uuid.uuid4()),
-    'email': 'admin@sirketiniz.com',
+    'email': 'admin@visupanel.com',
     'full_name': 'Admin',
     'phone_number': '',
     'branch': 'Hadımköy',
@@ -103,48 +91,84 @@ admin = {
     'is_active': True,
     'free_analyses_remaining': 999,
     'total_analyses': 0,
-    'hashed_password': pwd_context.hash('GucluSifre123!'),
+    'hashed_password': pwd_context.hash('AdminSifre123!'),
     'created_at': datetime.now(timezone.utc).isoformat()
 }
 
-db.users.update_one({'email': admin['email']}, {'\$set': admin}, upsert=True)
-print('Admin oluşturuldu!')
-"
+db.users.update_one({'email': admin['email']}, {'$set': admin}, upsert=True)
+print('✅ Admin oluşturuldu: admin@visupanel.com / AdminSifre123!')
+EOF
 ```
+
+---
+
+## Erişim Bilgileri
+
+| | |
+|---|---|
+| **URL** | https://ize.visupanel.com |
+| **Admin Email** | admin@visupanel.com |
+| **Admin Şifre** | AdminSifre123! (değiştirin!) |
+
+---
+
+## Emergent LLM Key Nasıl Alınır?
+
+1. [Emergent Platform](https://emergentagent.com)'a giriş yapın
+2. Profile → Universal Key bölümüne gidin
+3. Key'i kopyalayın ve Coolify'da `EMERGENT_LLM_KEY` olarak ekleyin
+
+**Veya** admin panelinden (API Ayarları) ekleyebilirsiniz.
 
 ---
 
 ## Sorun Giderme
 
-### Build hatası alıyorsanız:
+### Build hatası:
 ```bash
-# Coolify'da Redeploy with --no-cache seçin
+# Coolify'da "Redeploy" → "Force Rebuild" seçin
+```
+
+### Container logları:
+```bash
+docker logs ize-backend
+docker logs ize-frontend
 ```
 
 ### MongoDB bağlantı hatası:
 ```bash
-# Container loglarını kontrol edin
-docker logs ize-backend
+docker exec -it ize-mongodb mongosh --eval "db.stats()"
 ```
 
 ### OCR çalışmıyor:
-Tesseract dil paketleri Dockerfile'da yüklü, kontrol edin:
 ```bash
 docker exec -it ize-backend tesseract --list-langs
+# deu, eng, tur görünmeli
 ```
 
 ---
 
 ## Yedekleme
 
-MongoDB verilerini yedeklemek için:
 ```bash
+# MongoDB yedekleme
 docker exec ize-mongodb mongodump --out /data/backup
-docker cp ize-mongodb:/data/backup ./backup
+docker cp ize-mongodb:/data/backup ./mongodb_backup_$(date +%Y%m%d)
+
+# Geri yükleme
+docker cp ./mongodb_backup_TARIH ize-mongodb:/data/backup
+docker exec ize-mongodb mongorestore /data/backup
 ```
 
 ---
 
-## Destek
+## Güncelleme
 
-Sorularınız için: [GitHub Issues]
+GitHub'a push yaptığınızda Coolify otomatik deploy edebilir:
+
+1. Coolify'da projeye gidin
+2. **Settings** → **Webhooks** → Enable
+3. GitHub repo'da webhook ekleyin
+
+Veya manuel:
+1. Coolify'da **"Redeploy"** butonuna tıklayın
