@@ -161,7 +161,7 @@ EMERGENT_LLM_KEY=sk-emergent-xxxxx
 
 ### Frontend (.env)
 ```env
-REACT_APP_BACKEND_URL=https://your-app.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://warranty-case-hub.preview.emergentagent.com
 ```
 
 ## 💡 Kullanım Örnekleri
@@ -221,7 +221,7 @@ curl http://localhost:8001/api/warranty-rules
 ```
 
 ### Frontend Test
-Tarayıcınızda: `https://your-app.preview.emergentagent.com`
+Tarayıcınızda: `https://warranty-case-hub.preview.emergentagent.com`
 
 ## 📝 Notlar
 
