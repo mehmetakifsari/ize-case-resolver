@@ -681,8 +681,17 @@ async def get_case_by_id(case_id: str, current_user: dict = Depends(get_current_
 
 
 @api_router.delete("/cases/{case_id}")
-async def delete_case(case_id: str):
+async def delete_case(case_id: str, current_user: dict = Depends(get_current_active_user)):
     """IZE case'ini siler"""
+    case = await db.ize_cases.find_one({"id": case_id})
+    
+    if not case:
+        raise HTTPException(status_code=404, detail="Case bulunamadı")
+    
+    # User sadece kendi case'lerini silebilir, admin hepsini silebilir
+    if current_user['role'] != 'admin' and case.get('user_id') != current_user['id']:
+        raise HTTPException(status_code=403, detail="Bu case'i silme yetkiniz yok")
+    
     result = await db.ize_cases.delete_one({"id": case_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Case bulunamadı")
