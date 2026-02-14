@@ -599,10 +599,17 @@ const RegisterPage = () => {
 const PricingPage = () => {
   const navigate = useNavigate();
   const { t, siteSettings } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+
+  const faqs = [
+    { question: t("faqQuestion1"), answer: t("faqAnswer1") },
+    { question: t("faqQuestion2"), answer: t("faqAnswer2") },
+    { question: t("faqQuestion3"), answer: t("faqAnswer3") },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="border-b bg-white dark:bg-gray-900 px-4 py-4">
+      <nav className="border-b bg-white dark:bg-gray-900 px-4 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <FileText className="w-8 h-8 text-primary" />
@@ -610,54 +617,176 @@ const PricingPage = () => {
           </Link>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
+            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/")}>{t("backToHome")}</Button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">{t("pricingTitle")}</h1>
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">{t("pricingSubtitle")}</p>
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <Badge className="mb-4" variant="outline">
+            <Zap className="w-3 h-3 mr-1" />
+            {t("freeTrialBadge")}
+          </Badge>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">{t("pricingTitle")}</h1>
+          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t("pricingSubtitle")}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-2xl">{t("free")}</CardTitle>
-              <CardDescription className="text-lg">{t("freeDesc")}</CardDescription>
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          {/* Free Plan */}
+          <Card className="border-2 relative">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl">{t("free")}</CardTitle>
+              <CardDescription>{t("freeDesc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-4xl font-bold">0₺</div>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />{t("freeAnalyses")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />{t("pdfReading")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />{t("aiAnalysis")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />{t("emailDraftFeature")}</li>
+            <CardContent className="space-y-6">
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">0₺</span>
+                <span className="text-gray-500 ml-1">{t("perMonth")}</span>
+              </div>
+              <Separator />
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>{t("freeAnalyses")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>{t("pdfReading")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>{t("aiAnalysis")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>{t("emailDraftFeature")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>{t("emailSupport")}</span>
+                </li>
               </ul>
-              <Button className="w-full" onClick={() => navigate("/register")} data-testid="pricing-free-btn">{t("startFree")}</Button>
+              <Button className="w-full" onClick={() => navigate("/register")} data-testid="pricing-free-btn">
+                {t("startFree")}
+              </Button>
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-primary relative">
-            <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 text-sm rounded-bl-lg">{t("comingSoon")}</div>
-            <CardHeader>
-              <CardTitle className="text-2xl">{t("pro")}</CardTitle>
-              <CardDescription className="text-lg">{t("proDesc")}</CardDescription>
+          {/* Pro Plan */}
+          <Card className="border-2 border-primary relative shadow-lg scale-105">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <Badge className="bg-primary text-white px-4 py-1">{t("mostPopular")}</Badge>
+            </div>
+            <CardHeader className="pb-2 pt-8">
+              <CardTitle className="text-xl">{t("pro")}</CardTitle>
+              <CardDescription>{t("proDesc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-4xl font-bold">{t("comingSoon")}...</div>
-              <ul className="space-y-2 text-gray-500">
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5" />{t("unlimitedAnalyses")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5" />{t("prioritySupport")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5" />{t("apiAccess")}</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5" />{t("customReports")}</li>
+            <CardContent className="space-y-6">
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">{t("comingSoon")}</span>
+              </div>
+              <Separator />
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>{t("unlimitedAnalyses")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>{t("pdfReading")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>{t("aiAnalysis")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>{t("prioritySupport")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>{t("customReports")}</span>
+                </li>
               </ul>
-              <Button className="w-full" disabled>{t("comingSoon")}</Button>
+              <Button className="w-full" disabled>
+                {t("comingSoon")}
+              </Button>
             </CardContent>
           </Card>
+
+          {/* Enterprise Plan */}
+          <Card className="border-2 relative">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl">{t("enterprise")}</CardTitle>
+              <CardDescription>{t("enterpriseDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">{t("customPricing")}</span>
+              </div>
+              <Separator />
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span>{t("unlimitedAnalyses")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span>{t("dedicatedSupport")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span>{t("customIntegration")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span>{t("slaGuarantee")}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span>{t("apiAccess")}</span>
+                </li>
+              </ul>
+              <Button className="w-full" variant="outline" disabled>
+                {t("contactSales")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">{t("faq")}</h2>
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <Card key={index}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-primary" />
+                    {faq.question}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 dark:text-gray-400">{faq.answer}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t py-8 px-4">
+        <div className="max-w-7xl mx-auto text-center text-gray-600 dark:text-gray-400">
+          <p>{siteSettings?.footer_text || `© 2026 ${t("appName")}. ${t("allRightsReserved")}`}</p>
+        </div>
+      </footer>
     </div>
   );
 };
