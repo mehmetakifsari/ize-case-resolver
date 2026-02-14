@@ -126,12 +126,12 @@ def extract_text_from_pdf(pdf_file: bytes) -> str:
         raise HTTPException(status_code=400, detail=f"PDF okunamadı: {str(e)}")
 
 
-async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[WarrantyRule]) -> Dict[str, Any]:
+async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]]) -> Dict[str, Any]:
     """OpenAI ile IZE dosyasını analiz eder"""
     try:
         # Garanti kurallarını birleştir
         rules_text = "\n\n".join([
-            f"Kural Versiyonu: {rule.rule_version}\n{rule.rule_text}\nAnahtar Kelimeler: {', '.join(rule.keywords)}"
+            f"Kural Versiyonu: {rule['rule_version']}\n{rule['rule_text']}\nAnahtar Kelimeler: {', '.join(rule['keywords'])}"
             for rule in warranty_rules
         ])
         
