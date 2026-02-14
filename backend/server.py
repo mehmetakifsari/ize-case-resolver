@@ -135,38 +135,61 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
             for rule in warranty_rules
         ])
         
-        # LLM Chat oluştur
-        api_key = os.environ.get('EMERGENT_LLM_KEY', '')
+        # LLM Chat oluştur - OpenAI key kontrolü
+        api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY', '')
         chat = LlmChat(
             api_key=api_key,
             session_id=str(uuid.uuid4()),
-            system_message="""Sen IZE (yurtdışı garanti dosyaları) analiz uzmanısın. 
-            Görüşün: PDF'deki bilgileri analiz edip yapılandırılmış JSON formatında çıkartmak.
+            system_message="""Sen Renault Trucks için yurtdışı garanti IZE dosyalarını analiz eden uzman bir sistemsin.
             
-            Garanti kurallarına göre değerlendirme yapmalısın ve aşağıdaki JSON formatında cevap vermelisin:
-            {
-                "ize_no": "IZE numarası",
-                "company": "Firma adı",
-                "plate": "Plaka",
-                "vin": "Şasi numarası",
-                "warranty_start_date": "YYYY-MM-DD formatında",
-                "repair_date": "YYYY-MM-DD formatında (varsa)",
-                "vehicle_age_months": arac_yaşı_ay,
-                "repair_km": tamir_km,
-                "request_type": "Talep türü",
-                "is_within_2_year_warranty": true/false,
-                "warranty_decision": "COVERED veya OUT_OF_COVERAGE veya ADDITIONAL_INFO_REQUIRED",
-                "decision_rationale": ["Gerekçe 1", "Gerekçe 2"],
-                "failure_complaint": "Müşteri şikayeti",
-                "failure_cause": "Arıza nedeni (teknik kök neden)",
-                "operations_performed": ["Yapılan işlem 1", "Yapılan işlem 2"],
-                "parts_replaced": [{"partName": "Parça adı", "description": "Açıklama", "qty": 1}],
-                "repair_process_summary": "Kısa kronolojik özet",
-                "email_subject": "Email konusu",
-                "email_body": "Kurumsal ve kibar bir email metni (Türkçe)"
-            }
-            
-            SADECE JSON formatında cevap ver, başka açıklama ekleme."""
+GÖREVİN: PDF'deki tüm teknik detayları dikkatle okuyup yapılandırılmış JSON formatında çıkartmak.
+
+ÖNEMLİ TALIMATLAR:
+1. Parça isimlerini ve işlemleri Almanca veya İngilizce orijinal hallerinde de belirt
+2. Tüm tarihleri YYYY-MM-DD formatına çevir (ör: 22.12.2023 → 2023-12-22)
+3. Araç yaşını teslimat tarihi ile işlem tarihi arasındaki fark olarak hesapla
+4. Yapılan tüm işlemleri madde madde listele (eksik bırakma)
+5. Değiştirilen her parçayı ayrı ayrı belirt
+6. Garanti değerlendirmesini kurallara göre yap (MHDV: 12 ay, Powertrain: +12 ay)
+7. Email metnini profesyonel, kibar ve Türkçe yaz
+
+ÇIKTI FORMATI (SADECE JSON):
+{
+    "ize_no": "IZE numarası (ör: IZE26006539)",
+    "company": "Müşteri firma adı tam hali",
+    "plate": "Plaka numarası",
+    "vin": "VIN/Şasi numarası tam hali",
+    "warranty_start_date": "YYYY-MM-DD (Teslimat/Zul. Datum)",
+    "repair_date": "YYYY-MM-DD (İşlem tarihi)",
+    "vehicle_age_months": araç_yaşı_ay_cinsinden_sayı,
+    "repair_km": kilometre_sayısı,
+    "request_type": "WARRANTY SUPPORT veya BREAKDOWN ASSISTANCE",
+    "is_within_2_year_warranty": true/false (24 ay içinde mi?),
+    "warranty_decision": "COVERED veya OUT_OF_COVERAGE veya ADDITIONAL_INFO_REQUIRED",
+    "decision_rationale": [
+        "Garanti kararının detaylı gerekçeleri",
+        "Araç yaşı, parça türü, kapsam durumu"
+    ],
+    "failure_complaint": "Müşteri şikayeti veya arıza belirtisi (varsa)",
+    "failure_cause": "Teknik arıza nedeni (hangi parça/sistem arızalandı)",
+    "operations_performed": [
+        "İşlem 1: Tam açıklama (ör: Tachometer Geber auswechseln - Takometre sensörü değişimi)",
+        "İşlem 2: Tam açıklama (ör: Tachoprüfung Digital nach § 57b - Dijital takograf testi)",
+        "... tüm işlemler"
+    ],
+    "parts_replaced": [
+        {
+            "partName": "Parça adı (orijinal + Türkçe)",
+            "description": "Parçanın fonksiyonu ve neden değiştirildiği",
+            "qty": 1
+        }
+    ],
+    "repair_process_summary": "Yapılan işlemlerin kronolojik özeti: Ne yapıldı, hangi parçalar değişti, sonuç nedir",
+    "email_subject": "Yurtdışı IZE Dosyası Hk. - IZE NO - PLAKA - ŞASİ",
+    "email_body": "Sayın İlgili,\\n\\nYurtdışı [Firma] firmasından gelen IZE NO: [numara] numaralı dosya incelenmiştir...\\n\\nDetaylı ve kibar email metni"
+}
+
+SADECE JSON ÇIKTISI VER, BAŞKA AÇIKLAMA EKLEME!"""
         ).with_model("openai", "gpt-4o")
         
         # Analiz mesajı oluştur
