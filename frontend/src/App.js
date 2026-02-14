@@ -1511,6 +1511,187 @@ const AdminAPISettings = () => {
   );
 };
 
+// ==================== ADMIN EMAIL SETTINGS ====================
+
+const AdminEmailSettings = () => {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { token } = useAuth();
+  const { t } = useLanguage();
+
+  useEffect(() => { fetchSettings(); }, []);
+
+  const fetchSettings = async () => {
+    try { 
+      const response = await axios.get(`${API}/admin/email-settings`, { headers: { Authorization: `Bearer ${token}` } }); 
+      setSettings(response.data); 
+    } 
+    catch (error) { console.error("Error:", error); } 
+    finally { setLoading(false); }
+  };
+
+  const handleChange = (field, value) => {
+    setSettings({ ...settings, [field]: value });
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const updateData = {};
+      if (settings.smtp_host) updateData.smtp_host = settings.smtp_host;
+      if (settings.smtp_port) updateData.smtp_port = settings.smtp_port;
+      if (settings.smtp_user) updateData.smtp_user = settings.smtp_user;
+      if (settings.smtp_password) updateData.smtp_password = settings.smtp_password;
+      if (settings.sender_name) updateData.sender_name = settings.sender_name;
+      if (settings.sender_email) updateData.sender_email = settings.sender_email;
+      updateData.email_enabled = settings.email_enabled;
+      
+      await axios.put(`${API}/admin/email-settings`, updateData, { headers: { Authorization: `Bearer ${token}` } });
+      fetchSettings();
+      alert(t("settingsSaved"));
+    } catch (error) {
+      alert(t("error") + ": " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const testConnection = async () => {
+    setTesting(true);
+    try {
+      const response = await axios.post(`${API}/admin/email-settings/test`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data.success) {
+        alert(t("testConnectionSuccess"));
+      } else {
+        alert(t("testConnectionFailed") + ": " + response.data.message);
+      }
+    } catch (error) {
+      alert(t("testConnectionFailed") + ": " + (error.response?.data?.message || error.message));
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  if (loading) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div></AdminLayout>;
+
+  return (
+    <AdminLayout>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-email-settings-title">{t("emailSettings")}</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={testConnection} disabled={testing}>
+            {testing ? t("loading") : t("testConnection")}
+          </Button>
+          <Button onClick={saveSettings} disabled={saving}>{saving ? t("loading") : t("save")}</Button>
+        </div>
+      </div>
+
+      <div className="grid gap-6">
+        {/* SMTP Ayarları */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              {t("smtpSettings")}
+            </CardTitle>
+            <CardDescription>{t("emailSettingsDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t("smtpHost")}</Label>
+                <Input 
+                  value={settings?.smtp_host || ""} 
+                  onChange={(e) => handleChange("smtp_host", e.target.value)} 
+                  placeholder="smtp.visupanel.com" 
+                />
+              </div>
+              <div>
+                <Label>{t("smtpPort")}</Label>
+                <Input 
+                  type="number"
+                  value={settings?.smtp_port || 587} 
+                  onChange={(e) => handleChange("smtp_port", parseInt(e.target.value))} 
+                  placeholder="587" 
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t("smtpUser")}</Label>
+                <Input 
+                  value={settings?.smtp_user || ""} 
+                  onChange={(e) => handleChange("smtp_user", e.target.value)} 
+                  placeholder="info@visupanel.com" 
+                />
+              </div>
+              <div>
+                <Label>{t("smtpPassword")}</Label>
+                <div className="relative">
+                  <Input 
+                    type={showPassword ? "text" : "password"}
+                    value={settings?.smtp_password || ""} 
+                    onChange={(e) => handleChange("smtp_password", e.target.value)} 
+                    placeholder="********" 
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="absolute right-0 top-0 h-full px-3" 
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+                {settings?.smtp_password_masked && !settings?.smtp_password && (
+                  <p className="text-xs text-gray-500 mt-1">Mevcut: {settings.smtp_password_masked}</p>
+                )}
+              </div>
+            </div>
+            <Separator />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t("senderName")}</Label>
+                <Input 
+                  value={settings?.sender_name || ""} 
+                  onChange={(e) => handleChange("sender_name", e.target.value)} 
+                  placeholder="IZE Case Resolver" 
+                />
+              </div>
+              <div>
+                <Label>{t("senderEmail")}</Label>
+                <Input 
+                  type="email"
+                  value={settings?.sender_email || ""} 
+                  onChange={(e) => handleChange("sender_email", e.target.value)} 
+                  placeholder="info@visupanel.com" 
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div>
+                <Label className="text-base">{t("emailEnabled")}</Label>
+                <p className="text-sm text-gray-500">Analiz tamamlandığında kullanıcıya e-posta gönderilsin</p>
+              </div>
+              <Button 
+                variant={settings?.email_enabled ? "default" : "outline"}
+                onClick={() => handleChange("email_enabled", !settings?.email_enabled)}
+              >
+                {settings?.email_enabled ? t("active") : t("inactive")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </AdminLayout>
+  );
+};
+
 // ==================== ADMIN SITE SETTINGS ====================
 
 const AdminSiteSettings = () => {
