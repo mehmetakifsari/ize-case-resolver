@@ -200,28 +200,31 @@ GÖREVİN: PDF'deki tüm teknik detayları dikkatle okuyup yapılandırılmış 
 SADECE JSON ÇIKTISI VER, BAŞKA AÇIKLAMA EKLEME!"""
         ).with_model("openai", "gpt-4o")
         
-        # Analiz mesajı oluştur - Daha detaylı prompt
+        # Analiz mesajı oluştur - Daha detaylı prompt ve daha fazla içerik
         prompt = f"""
 IZE DOSYASI ANALİZ TALEBİ
 
 --- RENAULT TRUCKS GARANTİ KURALLARI ---
 {rules_text}
 
---- IZE DOSYASI HAM İÇERİK ---
-{pdf_text[:12000]}
+--- IZE DOSYASI HAM İÇERİK (TÜM SAYFALAR) ---
+{pdf_text[:20000]}
 
 --- ANALİZ TALİMATLARI ---
-1. Yukarıdaki IZE dosyasındaki TÜM bilgileri dikkatle oku
+1. Yukarıdaki IZE dosyasındaki TÜM bilgileri dikkatle oku (özellikle WERKSTATTRECHNUNG ve fatura sayfalarını)
 2. Araç bilgilerini çıkar (IZE no, firma, plaka, VIN, tarihler, km)
-3. Yapılan TÜM işlemleri detaylıca listele (hiçbirini atlama)
-4. Değiştirilen TÜM parçaları belirt (orijinal isim + Türkçe açıklama)
-5. Teslimat tarihi ile işlem tarihi arasındaki farkı hesapla
-6. Garanti kurallarına göre değerlendirme yap:
+3. WERKSTATTRECHNUNG (atölye faturası) bölümünü bul ve yapılan TÜM işlemleri detaylıca listele
+4. Her işlemin kod numarasını, Almanca ismini ve Türkçe açıklamasını belirt
+5. Değiştirilen TÜM parçaları belirt (RT ile başlayan parça kodları, orijinal isim + Türkçe)
+6. Teslimat tarihi (Zul. Datum veya Delivery Date) ile işlem tarihi (Leistungsdatum) arasındaki farkı hesapla
+7. Garanti kurallarına göre değerlendirme yap:
    - MHDV: 12 ay temel garanti
-   - Powertrain bileşenleri: +12 ay (toplam 24 ay)
+   - Powertrain bileşenleri (motor, şanzıman, aks): +12 ay (toplam 24 ay)
    - LCV: 36 ay
-7. Garanti dışı parçaları kontrol et (batarya, fren, debriyaj, lastik vb.)
-8. Profesyonel ve kibar bir email metni oluştur
+   - Garanti dışı parçalar: Batarya, fren, debriyaj, cam, lastik, kayış, burç
+8. Profesyonel ve kibar bir email metni oluştur (Türkçe)
+
+ÖNEMLİ: İşlemler ve parçalar bölümünü boş bırakma! WERKSTATTRECHNUNG bölümündeki her satırı oku!
 
 SADECE JSON formatında çıktı ver. Başka hiçbir metin ekleme!
 """
