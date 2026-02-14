@@ -24,6 +24,7 @@ from routes.auth import router as auth_router
 from routes.cases import router as cases_router
 from routes.admin import router as admin_router
 from routes.warranty import router as warranty_router
+from routes.site_settings import router as site_settings_router
 
 # Create the main app
 app = FastAPI(
@@ -37,6 +38,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(cases_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(warranty_router, prefix="/api")
+app.include_router(site_settings_router, prefix="/api")
 
 
 @app.get("/api/")
