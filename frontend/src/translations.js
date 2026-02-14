@@ -439,6 +439,23 @@ export const translations = {
     deleted: "Deleted",
     updated: "Updated",
     
+    // Warranty Rules
+    uploadPdf: "Upload PDF",
+    addManually: "Add Manually",
+    ruleVersion: "Version",
+    ruleText: "Rule Text",
+    sourceType: "Source",
+    manual: "Manual",
+    pdf: "PDF",
+    activeRules: "Active Rules",
+    allRulesTab: "All Rules",
+    uploadWarrantyPdf: "Upload Warranty PDF",
+    uploadWarrantyPdfDesc: "Automatically extract warranty rules from PDF file",
+    selectPdfFile: "Select PDF File",
+    extractedChars: "Extracted characters",
+    ruleUploaded: "Rule uploaded successfully",
+    toggleActiveStatus: "Toggle Active",
+    
     // No data
     noUsers: "No users found",
     noCases: "No cases found",
