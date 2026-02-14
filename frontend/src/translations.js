@@ -207,6 +207,23 @@ export const translations = {
     deleted: "Silindi",
     updated: "Güncellendi",
     
+    // Warranty Rules
+    uploadPdf: "PDF Yükle",
+    addManually: "Manuel Ekle",
+    ruleVersion: "Versiyon",
+    ruleText: "Kural Metni",
+    sourceType: "Kaynak",
+    manual: "Manuel",
+    pdf: "PDF",
+    activeRules: "Aktif Kurallar",
+    allRulesTab: "Tüm Kurallar",
+    uploadWarrantyPdf: "Garanti PDF'i Yükle",
+    uploadWarrantyPdfDesc: "PDF dosyasından garanti kurallarını otomatik olarak çıkarın",
+    selectPdfFile: "PDF Dosyası Seç",
+    extractedChars: "Çıkarılan karakter",
+    ruleUploaded: "Kural başarıyla yüklendi",
+    toggleActiveStatus: "Aktif/Pasif",
+    
     // No data
     noUsers: "Kullanıcı bulunamadı",
     noCases: "Case bulunamadı",
