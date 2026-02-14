@@ -305,7 +305,7 @@ async def analyze_ize_pdf(file: UploadFile = File(...)):
         email_body=analysis_result.get('email_body', ''),
         pdf_file_name=file.filename,
         extracted_text=extracted_text[:2000],  # İlk 2000 karakter
-        binder_version_used=warranty_rules[0].rule_version if warranty_rules else "default"
+        binder_version_used=warranty_rules[0]['rule_version'] if warranty_rules else "default"
     )
     
     # Veritabanına kaydet
