@@ -461,7 +461,9 @@ async def login(credentials: UserLogin):
         "id": user['id'],
         "email": user['email'],
         "full_name": user['full_name'],
-        "role": user['role']
+        "role": user['role'],
+        "free_analyses_remaining": user.get('free_analyses_remaining', 0),
+        "total_analyses": user.get('total_analyses', 0)
     }
     
     return {
