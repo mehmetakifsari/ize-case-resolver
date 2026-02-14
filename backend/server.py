@@ -51,6 +51,8 @@ class User(BaseModel):
     full_name: str
     role: str = "user"  # admin veya user
     is_active: bool = True
+    free_analyses_remaining: int = 5  # Ücretsiz analiz hakkı
+    total_analyses: int = 0  # Toplam yapılan analiz sayısı
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
