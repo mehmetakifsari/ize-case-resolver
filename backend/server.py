@@ -39,6 +39,47 @@ logger = logging.getLogger(__name__)
 
 # ==================== DATA MODELS ====================
 
+# Auth Models
+security = HTTPBearer()
+
+class User(BaseModel):
+    """Kullanıcı modeli"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: EmailStr
+    full_name: str
+    role: str = "user"  # admin veya user
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserInDB(User):
+    """Database'deki kullanıcı (şifre hash'li)"""
+    hashed_password: str
+
+
+class UserCreate(BaseModel):
+    """Kullanıcı oluşturma modeli"""
+    email: EmailStr
+    password: str
+    full_name: str
+    role: str = "user"
+
+
+class UserLogin(BaseModel):
+    """Login modeli"""
+    email: EmailStr
+    password: str
+
+
+class Token(BaseModel):
+    """Token response modeli"""
+    access_token: str
+    token_type: str
+    user: dict
+
+
 class PartReplaced(BaseModel):
     """Değiştirilen parça modeli"""
     part_name: str
