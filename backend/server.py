@@ -555,8 +555,8 @@ async def delete_warranty_rule(rule_id: str, admin: dict = Depends(get_admin_use
 
 
 @api_router.post("/analyze", response_model=IZECase)
-async def analyze_ize_pdf(file: UploadFile = File(...)):
-    """IZE PDF dosyasını analiz eder"""
+async def analyze_ize_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_active_user)):
+    """IZE PDF dosyasını analiz eder (Authentication gerekli)"""
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Sadece PDF dosyası yükleyebilirsiniz")
     
@@ -564,7 +564,7 @@ async def analyze_ize_pdf(file: UploadFile = File(...)):
     pdf_content = await file.read()
     
     # Metni çıkar
-    logger.info(f"PDF okunuyor: {file.filename}")
+    logger.info(f"PDF okunuyor: {file.filename} (User: {current_user['email']})")
     extracted_text = extract_text_from_pdf(pdf_content)
     
     if not extracted_text or len(extracted_text) < 50:
@@ -589,7 +589,11 @@ async def analyze_ize_pdf(file: UploadFile = File(...)):
     # IZE Case oluştur
     case_title = f"{analysis_result.get('ize_no', 'N/A')} - {analysis_result.get('company', 'N/A')} - {analysis_result.get('plate', 'N/A')}"
     
+    # Tarihten ay ve yıl çıkar
+    created_at = datetime.now(timezone.utc)
+    
     ize_case = IZECase(
+        user_id=current_user['id'],  # Yükleyen kullanıcı
         case_title=case_title,
         ize_no=analysis_result.get('ize_no', 'N/A'),
         company=analysis_result.get('company', 'N/A'),
@@ -612,7 +616,9 @@ async def analyze_ize_pdf(file: UploadFile = File(...)):
         email_body=analysis_result.get('email_body', ''),
         pdf_file_name=file.filename,
         extracted_text=extracted_text[:2000],  # İlk 2000 karakter
-        binder_version_used=warranty_rules[0]['rule_version'] if warranty_rules else "default"
+        binder_version_used=warranty_rules[0]['rule_version'] if warranty_rules else "default",
+        month=created_at.month,
+        year=created_at.year
     )
     
     # Veritabanına kaydet
