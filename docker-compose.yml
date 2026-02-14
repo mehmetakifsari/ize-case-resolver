@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6
+    container_name: ize-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=ize_database
+    networks:
+      - ize-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ize-backend
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=ize_database
+      - CORS_ORIGINS=*
+      - EMERGENT_LLM_KEY=${EMERGENT_LLM_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-super-secret-jwt-key-change-this}
+    networks:
+      - ize-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8001"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=https://${BACKEND_DOMAIN}
+    container_name: ize-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - ize-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+volumes:
+  mongodb_data:
+
+networks:
+  ize-network:
+    driver: bridge
