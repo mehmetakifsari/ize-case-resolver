@@ -661,6 +661,19 @@ async def analyze_ize_pdf(file: UploadFile = File(...), current_user: dict = Dep
     await db.ize_cases.insert_one(doc)
     logger.info(f"IZE Case kaydedildi: {ize_case.id}")
     
+    # Krediyi azalt (Admin hariç)
+    if current_user['role'] != 'admin':
+        await db.users.update_one(
+            {"id": current_user['id']},
+            {
+                "$inc": {
+                    "free_analyses_remaining": -1,
+                    "total_analyses": 1
+                }
+            }
+        )
+        logger.info(f"Kullanıcı kredisi güncellendi: {current_user['email']}")
+    
     return ize_case
 
 
