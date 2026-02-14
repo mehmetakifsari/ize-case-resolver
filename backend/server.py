@@ -539,6 +539,58 @@ async def toggle_user_active(user_id: str, admin: dict = Depends(get_admin_user)
     return {"message": "User status updated", "is_active": new_status}
 
 
+
+# ==================== ADMIN SETTINGS ====================
+
+@api_router.get("/admin/settings")
+async def get_api_settings(admin: dict = Depends(get_admin_user)):
+    """API ayarlarını getir (Sadece admin)"""
+    settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
+    
+    if not settings:
+        return {
+            "id": "api_settings",
+            "openai_key": None,
+            "anthropic_key": None,
+            "google_key": None,
+            "other_keys": {}
+        }
+    
+    return settings
+
+
+@api_router.put("/admin/settings")
+async def update_api_settings(settings_update: APISettingsUpdate, admin: dict = Depends(get_admin_user)):
+    """API ayarlarını güncelle (Sadece admin)"""
+    settings = await db.api_settings.find_one({"id": "api_settings"})
+    
+    if not settings:
+        settings = {
+            "id": "api_settings",
+            "openai_key": None,
+            "anthropic_key": None,
+            "google_key": None,
+            "other_keys": {}
+        }
+    
+    # Güncelle
+    update_data = settings_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if value is not None:
+            settings[key] = value
+    
+    settings['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    await db.api_settings.update_one(
+        {"id": "api_settings"},
+        {"$set": settings},
+        upsert=True
+    )
+    
+    return settings
+
+
+
 @api_router.get("/")
 async def root():
     return {"message": "IZE Case Resolver API", "version": "1.0"}
