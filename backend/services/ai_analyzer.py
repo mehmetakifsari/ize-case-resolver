@@ -9,7 +9,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 logger = logging.getLogger(__name__)
 
 
-async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]]) -> Dict[str, Any]:
+async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]], db_settings: Dict[str, Any] = None) -> Dict[str, Any]:
     """OpenAI ile IZE dosyasını analiz eder"""
     try:
         # Garanti kurallarını birleştir
@@ -18,8 +18,17 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
             for rule in warranty_rules
         ])
         
-        # LLM Chat oluştur - OpenAI key kontrolü
-        api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY', '')
+        # API Key öncelik sırası: 
+        # 1. Panel'deki OpenAI key
+        # 2. Panel'deki Emergent key
+        # 3. Environment'taki OPENAI_API_KEY
+        # 4. Environment'taki EMERGENT_LLM_KEY
+        api_key = None
+        if db_settings:
+            api_key = db_settings.get('openai_key') or db_settings.get('emergent_key')
+        if not api_key:
+            api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY', '')
+        
         chat = LlmChat(
             api_key=api_key,
             session_id=str(uuid.uuid4()),
