@@ -61,10 +61,25 @@ export const translations = {
     warrantyRules: "Garanti Kuralları",
     apiSettings: "API Ayarları",
     siteSettings: "Site Ayarları",
+    emailSettings: "E-posta Ayarları",
     uploadIze: "IZE Yükle",
     myAnalyses: "Analizlerim",
     darkMode: "Koyu Mod",
     lightMode: "Açık Mod",
+    
+    // Email Settings
+    smtpSettings: "SMTP Ayarları",
+    smtpHost: "SMTP Sunucusu",
+    smtpPort: "SMTP Port",
+    smtpUser: "SMTP Kullanıcı",
+    smtpPassword: "SMTP Şifre",
+    senderName: "Gönderen Adı",
+    senderEmail: "Gönderen E-posta",
+    emailEnabled: "E-posta Bildirimi Aktif",
+    testConnection: "Bağlantıyı Test Et",
+    testConnectionSuccess: "SMTP bağlantısı başarılı",
+    testConnectionFailed: "SMTP bağlantısı başarısız",
+    emailSettingsDesc: "Analiz sonuçlarının e-posta ile gönderilmesi için SMTP ayarları",
     
     // Admin Panel
     adminPanel: "Yönetici Paneli",
