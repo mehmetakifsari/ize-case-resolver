@@ -546,8 +546,8 @@ async def get_warranty_rules():
 
 
 @api_router.delete("/warranty-rules/{rule_id}")
-async def delete_warranty_rule(rule_id: str):
-    """Garanti kuralını siler"""
+async def delete_warranty_rule(rule_id: str, admin: dict = Depends(get_admin_user)):
+    """Garanti kuralını siler (Sadece admin)"""
     result = await db.warranty_rules.delete_one({"id": rule_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Kural bulunamadı")
