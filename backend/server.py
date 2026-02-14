@@ -192,18 +192,31 @@ GÖREVİN: PDF'deki tüm teknik detayları dikkatle okuyup yapılandırılmış 
 SADECE JSON ÇIKTISI VER, BAŞKA AÇIKLAMA EKLEME!"""
         ).with_model("openai", "gpt-4o")
         
-        # Analiz mesajı oluştur
+        # Analiz mesajı oluştur - Daha detaylı prompt
         prompt = f"""
-        Aşağıdaki IZE dosyasını analiz et:
-        
-        --- GARANTI KURALLARI ---
-        {rules_text}
-        
-        --- IZE DOSYASI İÇERİĞİ ---
-        {pdf_text[:8000]}
-        
-        Yukarıdaki format ve kurallara göre analiz yap ve SADECE JSON formatında yanıt ver.
-        """
+IZE DOSYASI ANALİZ TALEBİ
+
+--- RENAULT TRUCKS GARANTİ KURALLARI ---
+{rules_text}
+
+--- IZE DOSYASI HAM İÇERİK ---
+{pdf_text[:12000]}
+
+--- ANALİZ TALİMATLARI ---
+1. Yukarıdaki IZE dosyasındaki TÜM bilgileri dikkatle oku
+2. Araç bilgilerini çıkar (IZE no, firma, plaka, VIN, tarihler, km)
+3. Yapılan TÜM işlemleri detaylıca listele (hiçbirini atlama)
+4. Değiştirilen TÜM parçaları belirt (orijinal isim + Türkçe açıklama)
+5. Teslimat tarihi ile işlem tarihi arasındaki farkı hesapla
+6. Garanti kurallarına göre değerlendirme yap:
+   - MHDV: 12 ay temel garanti
+   - Powertrain bileşenleri: +12 ay (toplam 24 ay)
+   - LCV: 36 ay
+7. Garanti dışı parçaları kontrol et (batarya, fren, debriyaj, lastik vb.)
+8. Profesyonel ve kibar bir email metni oluştur
+
+SADECE JSON formatında çıktı ver. Başka hiçbir metin ekleme!
+"""
         
         user_message = UserMessage(text=prompt)
         response = await chat.send_message(user_message)
