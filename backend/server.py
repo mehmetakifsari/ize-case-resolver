@@ -374,6 +374,147 @@ SADECE JSON formatında çıktı ver. Başka hiçbir metin ekleme!
 
 # ==================== API ENDPOINTS ====================
 
+
+
+# ==================== AUTH ENDPOINTS ====================
+
+@api_router.post("/auth/register", response_model=Token)
+async def register(user_data: UserCreate):
+    """Yeni kullanıcı kaydı"""
+    # Email kontrolü
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Kullanıcı oluştur
+    hashed_password = get_password_hash(user_data.password)
+    user = UserInDB(
+        email=user_data.email,
+        full_name=user_data.full_name,
+        role=user_data.role,
+        hashed_password=hashed_password
+    )
+    
+    user_dict = user.model_dump()
+    user_dict['created_at'] = user_dict['created_at'].isoformat()
+    
+    await db.users.insert_one(user_dict)
+    
+    # Token oluştur
+    access_token = create_access_token(data={"sub": user.id, "role": user.role})
+    
+    user_response = {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role
+    }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_response
+    }
+
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(credentials: UserLogin):
+    """Kullanıcı girişi"""
+    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    
+    if not user or not verify_password(credentials.password, user['hashed_password']):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    
+    if not user['is_active']:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # Token oluştur
+    access_token = create_access_token(data={"sub": user['id'], "role": user['role']})
+    
+    user_response = {
+        "id": user['id'],
+        "email": user['email'],
+        "full_name": user['full_name'],
+        "role": user['role']
+    }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_response
+    }
+
+
+@api_router.get("/auth/me")
+async def get_me(current_user: dict = Depends(get_current_active_user)):
+    """Mevcut kullanıcı bilgisi"""
+    return {
+        "id": current_user['id'],
+        "email": current_user['email'],
+        "full_name": current_user['full_name'],
+        "role": current_user['role'],
+        "is_active": current_user['is_active']
+    }
+
+
+# ==================== ADMIN USER MANAGEMENT ====================
+
+@api_router.get("/admin/users")
+async def get_all_users(admin: dict = Depends(get_admin_user)):
+    """Tüm kullanıcıları listele (Sadece admin)"""
+    users = await db.users.find({}, {"_id": 0, "hashed_password": 0}).to_list(1000)
+    return users
+
+
+@api_router.post("/admin/users", response_model=User)
+async def create_user(user_data: UserCreate, admin: dict = Depends(get_admin_user)):
+    """Yeni kullanıcı oluştur (Sadece admin)"""
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = get_password_hash(user_data.password)
+    user = UserInDB(
+        email=user_data.email,
+        full_name=user_data.full_name,
+        role=user_data.role,
+        hashed_password=hashed_password
+    )
+    
+    user_dict = user.model_dump()
+    user_dict['created_at'] = user_dict['created_at'].isoformat()
+    
+    await db.users.insert_one(user_dict)
+    
+    return User(**{k: v for k, v in user_dict.items() if k != 'hashed_password'})
+
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Kullanıcıyı sil (Sadece admin)"""
+    if user_id == admin['id']:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deleted", "id": user_id}
+
+
+@api_router.patch("/admin/users/{user_id}/toggle-active")
+async def toggle_user_active(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Kullanıcıyı aktif/pasif yap (Sadece admin)"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    new_status = not user['is_active']
+    await db.users.update_one({"id": user_id}, {"$set": {"is_active": new_status}})
+    
+    return {"message": "User status updated", "is_active": new_status}
+
+
 @api_router.get("/")
 async def root():
     return {"message": "IZE Case Resolver API", "version": "1.0"}
