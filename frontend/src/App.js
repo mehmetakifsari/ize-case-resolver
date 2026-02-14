@@ -1041,21 +1041,21 @@ const AdminUsers = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-users-title">Kullanıcı Yönetimi</h1>
         <div className="flex gap-2">
-          <Select value={filter.branch} onValueChange={(v) => setFilter({...filter, branch: v})}>
+          <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Tüm Şubeler" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tüm Şubeler</SelectItem>
+              <SelectItem value="all">Tüm Şubeler</SelectItem>
               {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filter.role} onValueChange={(v) => setFilter({...filter, role: v})}>
+          <Select value={filter.role || "all"} onValueChange={(v) => setFilter({...filter, role: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Tüm Roller" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tüm Roller</SelectItem>
+              <SelectItem value="all">Tüm Roller</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="user">User</SelectItem>
             </SelectContent>
@@ -1187,21 +1187,21 @@ const AdminAllCases = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-cases-title">Tüm IZE Dosyaları</h1>
         <div className="flex gap-2">
-          <Select value={filter.branch} onValueChange={(v) => setFilter({...filter, branch: v})}>
+          <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Tüm Şubeler" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tüm Şubeler</SelectItem>
+              <SelectItem value="all">Tüm Şubeler</SelectItem>
               {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filter.archived} onValueChange={(v) => setFilter({...filter, archived: v})}>
+          <Select value={filter.archived || "all"} onValueChange={(v) => setFilter({...filter, archived: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Tümü" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tümü</SelectItem>
+              <SelectItem value="all">Tümü</SelectItem>
               <SelectItem value="false">Aktif</SelectItem>
               <SelectItem value="true">Arşiv</SelectItem>
             </SelectContent>
