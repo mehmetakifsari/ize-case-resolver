@@ -581,6 +581,15 @@ async def delete_warranty_rule(rule_id: str, admin: dict = Depends(get_admin_use
 @api_router.post("/analyze", response_model=IZECase)
 async def analyze_ize_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_active_user)):
     """IZE PDF dosyasını analiz eder (Authentication gerekli)"""
+    
+    # Kredi kontrolü (Admin sınırsız)
+    if current_user['role'] != 'admin':
+        if current_user.get('free_analyses_remaining', 0) <= 0:
+            raise HTTPException(
+                status_code=403, 
+                detail="Ücretsiz analiz hakkınız bitti. Lütfen yönetici ile iletişime geçin."
+            )
+    
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Sadece PDF dosyası yükleyebilirsiniz")
     
