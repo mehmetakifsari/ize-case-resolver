@@ -114,12 +114,20 @@ class IZECaseResponse(BaseModel):
 # ==================== HELPER FUNCTIONS ====================
 
 def extract_text_from_pdf(pdf_file: bytes) -> str:
-    """PDF'den metin çıkarır"""
+    """PDF'den metin çıkarır - geliştirilmiş versiyon"""
     try:
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file))
         text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+        total_pages = len(pdf_reader.pages)
+        
+        logger.info(f"PDF toplam {total_pages} sayfa içeriyor")
+        
+        for page_num, page in enumerate(pdf_reader.pages, 1):
+            page_text = page.extract_text()
+            text += f"\n\n--- SAYFA {page_num} ---\n{page_text}"
+            logger.info(f"Sayfa {page_num} işlendi: {len(page_text)} karakter")
+        
+        logger.info(f"Toplam çıkarılan metin: {len(text)} karakter")
         return text.strip()
     except Exception as e:
         logger.error(f"PDF okuma hatası: {str(e)}")
