@@ -113,19 +113,33 @@ class IZECaseResponse(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 
+import pdfplumber
+
 def extract_text_from_pdf(pdf_file: bytes) -> str:
-    """PDF'den metin çıkarır - geliştirilmiş versiyon"""
+    """PDF'den metin çıkarır - pdfplumber ile geliştirilmiş versiyon"""
     try:
-        pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file))
         text = ""
-        total_pages = len(pdf_reader.pages)
         
-        logger.info(f"PDF toplam {total_pages} sayfa içeriyor")
+        with pdfplumber.open(io.BytesIO(pdf_file)) as pdf:
+            total_pages = len(pdf.pages)
+            logger.info(f"PDF toplam {total_pages} sayfa içeriyor")
+            
+            for page_num, page in enumerate(pdf.pages, 1):
+                page_text = page.extract_text()
+                if page_text:
+                    text += f"\n\n--- SAYFA {page_num} ---\n{page_text}"
+                    logger.info(f"Sayfa {page_num} işlendi: {len(page_text)} karakter")
+                else:
+                    logger.warning(f"Sayfa {page_num} boş veya okunamadı")
         
-        for page_num, page in enumerate(pdf_reader.pages, 1):
-            page_text = page.extract_text()
-            text += f"\n\n--- SAYFA {page_num} ---\n{page_text}"
-            logger.info(f"Sayfa {page_num} işlendi: {len(page_text)} karakter")
+        if not text or len(text) < 100:
+            logger.error("PDF'den yeterli metin çıkarılamadı, PyPDF2 ile deneniyor...")
+            # Fallback to PyPDF2
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file))
+            text = ""
+            for page_num, page in enumerate(pdf_reader.pages, 1):
+                page_text = page.extract_text()
+                text += f"\n\n--- SAYFA {page_num} ---\n{page_text}"
         
         logger.info(f"Toplam çıkarılan metin: {len(text)} karakter")
         return text.strip()
