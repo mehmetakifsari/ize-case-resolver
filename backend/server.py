@@ -267,13 +267,11 @@ async def analyze_ize_pdf(file: UploadFile = File(...)):
     if not warranty_rules:
         logger.warning("Garanti kuralı bulunamadı, varsayılan kurallar kullanılıyor")
         # Varsayılan kural
-        warranty_rules = [
-            WarrantyRule(
-                rule_version="1.0",
-                rule_text="2 yıl içindeki araçlar garanti kapsamındadır. Üretim hatalarından kaynaklanan arızalar garanti kapsamındadır.",
-                keywords=["garanti", "warranty", "2 yıl", "üretim hatası"]
-            )
-        ]
+        warranty_rules = [{
+            'rule_version': "1.0",
+            'rule_text': "2 yıl içindeki araçlar garanti kapsamındadır. Üretim hatalarından kaynaklanan arızalar garanti kapsamındadır.",
+            'keywords': ["garanti", "warranty", "2 yıl", "üretim hatası"]
+        }]
     
     # AI ile analiz et
     logger.info("AI analizi başlatılıyor...")
