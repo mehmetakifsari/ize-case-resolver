@@ -55,19 +55,22 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 │   │   ├── user.py
 │   │   ├── case.py
 │   │   ├── warranty.py
-│   │   └── settings.py
+│   │   ├── settings.py
+│   │   └── site_settings.py
 │   ├── routes/          # API endpoints
 │   │   ├── auth.py
 │   │   ├── cases.py
 │   │   ├── admin.py
-│   │   └── warranty.py
+│   │   ├── warranty.py
+│   │   └── site_settings.py
 │   └── services/        # Business logic
 │       ├── auth.py
 │       ├── pdf_processor.py
 │       └── ai_analyzer.py
 ├── frontend/
 │   └── src/
-│       └── App.js       # React SPA
+│       ├── App.js       # React SPA
+│       └── translations.js # TR/EN translations
 └── memory/
     └── PRD.md
 ```
@@ -106,6 +109,41 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 }
 ```
 
+### site_settings
+```json
+{
+  "id": "site_settings",
+  "site_name": "string",
+  "site_title": "string",
+  "site_description": "string",
+  "default_language": "tr|en",
+  "meta_title": "string",
+  "meta_description": "string",
+  "meta_keywords": "string",
+  "google_analytics_id": "string",
+  "google_tag_manager_id": "string",
+  "yandex_metrica_id": "string",
+  "contact_email": "string",
+  "contact_phone": "string",
+  "company_name": "string",
+  "footer_text": "string"
+}
+```
+
+### warranty_rules
+```json
+{
+  "id": "uuid",
+  "rule_version": "string",
+  "rule_text": "string",
+  "keywords": ["string"],
+  "source_type": "manual|pdf",
+  "source_filename": "string|null",
+  "is_active": "boolean",
+  "created_at": "datetime"
+}
+```
+
 ## API Endpoints
 
 ### Authentication
@@ -131,12 +169,22 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - GET /api/admin/settings - Get API settings
 - PUT /api/admin/settings - Update API settings
 
-### Warranty Rules
+### Site Settings (NEW)
+- GET /api/site-settings - Get site settings (Public)
+- PUT /api/site-settings - Update site settings (Admin only)
+
+### Warranty Rules (UPDATED)
 - GET /api/warranty-rules - List rules
-- POST /api/warranty-rules - Create rule
+- GET /api/warranty-rules?active_only=true - List active rules only
+- POST /api/warranty-rules - Create manual rule
+- POST /api/warranty-rules/upload-pdf - Upload PDF to create rule (NEW)
+- PUT /api/warranty-rules/{id} - Update rule
+- PATCH /api/warranty-rules/{id}/toggle-active - Toggle active status (NEW)
 - DELETE /api/warranty-rules/{id} - Delete rule
 
-## Completed Tasks (2026-02-14)
+## Completed Tasks
+
+### Session 1 (2026-02-14)
 1. ✅ Backend refactoring (monolithic → modular)
 2. ✅ User model update (phone_number, branch, role)
 3. ✅ Password complexity validation
@@ -148,6 +196,14 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 9. ✅ Registration form with new fields
 10. ✅ Mobile responsive UI
 11. ✅ Testing (100% pass rate)
+
+### Session 2 (2026-02-14 - Current)
+12. ✅ Site Settings page (General, SEO, Analytics, Contact tabs)
+13. ✅ Multi-language support (TR/EN) with language switcher
+14. ✅ Warranty Rules versioning with PDF upload
+15. ✅ Warranty Rules active/inactive toggle
+16. ✅ Professional Pricing page with 3 plans and FAQ
+17. ✅ All features tested (100% pass rate)
 
 ## Upcoming Tasks (P1)
 - [ ] Email notification after analysis
