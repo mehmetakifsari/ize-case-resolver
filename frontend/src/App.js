@@ -816,6 +816,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/cases", icon: List, label: t("allCases") },
     { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
     { path: "/admin/api-settings", icon: Key, label: t("apiSettings") },
+    { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
     { path: "/admin/site-settings", icon: Settings, label: t("siteSettings") },
   ];
 
