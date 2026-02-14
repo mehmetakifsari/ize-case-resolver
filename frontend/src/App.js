@@ -1422,6 +1422,7 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
+    emergent_key: "",
     openai_key: "",
     anthropic_key: "",
     google_key: ""
@@ -1451,6 +1452,7 @@ const AdminSettings = () => {
     setSaving(true);
     try {
       const updateData = {};
+      if (formData.emergent_key) updateData.emergent_key = formData.emergent_key;
       if (formData.openai_key) updateData.openai_key = formData.openai_key;
       if (formData.anthropic_key) updateData.anthropic_key = formData.anthropic_key;
       if (formData.google_key) updateData.google_key = formData.google_key;
@@ -1458,7 +1460,7 @@ const AdminSettings = () => {
       await axios.put(`${API}/admin/settings`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setFormData({ openai_key: "", anthropic_key: "", google_key: "" });
+      setFormData({ emergent_key: "", openai_key: "", anthropic_key: "", google_key: "" });
       fetchSettings();
       alert("Ayarlar güncellendi");
     } catch (error) {
@@ -1490,6 +1492,19 @@ const AdminSettings = () => {
             <CardDescription>Maskelenmiş API key'leriniz</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
+              <div>
+                <Label className="text-primary font-semibold">Emergent LLM Key (Önerilen)</Label>
+                <p className="text-sm text-gray-500 font-mono">
+                  {settings?.emergent_key_masked || "Ayarlanmamış"}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">OpenAI, Anthropic, Gemini tek key ile</p>
+              </div>
+              <Badge variant={settings?.emergent_key ? "default" : "outline"}>
+                {settings?.emergent_key ? "Aktif" : "Yok"}
+              </Badge>
+            </div>
+            <Separator />
             <div className="flex items-center justify-between">
               <div>
                 <Label>OpenAI API Key</Label>
@@ -1536,8 +1551,30 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={updateSettings} className="space-y-4">
+              <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+                <Label className="text-primary font-semibold">Emergent LLM Key (Önerilen)</Label>
+                <p className="text-xs text-gray-500 mb-2">Tek key ile OpenAI, Anthropic ve Gemini modellerini kullanın</p>
+                <div className="relative">
+                  <Input
+                    type={showKeys.emergent ? "text" : "password"}
+                    value={formData.emergent_key}
+                    onChange={(e) => setFormData({...formData, emergent_key: e.target.value})}
+                    placeholder="sk-emergent-..."
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowKeys({...showKeys, emergent: !showKeys.emergent})}
+                  >
+                    {showKeys.emergent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              <Separator />
               <div>
-                <Label>Yeni OpenAI API Key</Label>
+                <Label>OpenAI API Key</Label>
                 <div className="relative">
                   <Input
                     type={showKeys.openai ? "text" : "password"}
@@ -1557,7 +1594,7 @@ const AdminSettings = () => {
                 </div>
               </div>
               <div>
-                <Label>Yeni Anthropic API Key</Label>
+                <Label>Anthropic API Key</Label>
                 <div className="relative">
                   <Input
                     type={showKeys.anthropic ? "text" : "password"}
@@ -1577,7 +1614,7 @@ const AdminSettings = () => {
                 </div>
               </div>
               <div>
-                <Label>Yeni Google API Key</Label>
+                <Label>Google API Key</Label>
                 <div className="relative">
                   <Input
                     type={showKeys.google ? "text" : "password"}
