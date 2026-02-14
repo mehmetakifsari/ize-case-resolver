@@ -60,7 +60,11 @@ async def analyze_ize_pdf(
     
     # AI ile analiz et
     logger.info("AI analizi başlatılıyor...")
-    analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules)
+    
+    # Panel'deki API ayarlarını al
+    api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
+    
+    analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, api_settings)
     
     # IZE Case oluştur
     case_title = f"{analysis_result.get('ize_no', 'N/A')} - {analysis_result.get('company', 'N/A')} - {analysis_result.get('plate', 'N/A')}"
