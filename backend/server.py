@@ -632,9 +632,15 @@ async def analyze_ize_pdf(file: UploadFile = File(...), current_user: dict = Dep
 
 
 @api_router.get("/cases", response_model=List[IZECaseResponse])
-async def get_all_cases():
-    """Tüm IZE analiz sonuçlarını getirir"""
-    cases = await db.ize_cases.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_all_cases(current_user: dict = Depends(get_current_active_user)):
+    """IZE analiz sonuçlarını getirir (Kullanıcıya göre filtrelenir)"""
+    # Admin tüm case'leri görebilir, user sadece kendisininkini
+    if current_user['role'] == 'admin':
+        query = {}
+    else:
+        query = {"user_id": current_user['id']}
+    
+    cases = await db.ize_cases.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     
     for case in cases:
         if isinstance(case['created_at'], str):
@@ -657,12 +663,16 @@ async def get_all_cases():
 
 
 @api_router.get("/cases/{case_id}", response_model=IZECase)
-async def get_case_by_id(case_id: str):
+async def get_case_by_id(case_id: str, current_user: dict = Depends(get_current_active_user)):
     """Belirli bir IZE case'ini getirir"""
     case = await db.ize_cases.find_one({"id": case_id}, {"_id": 0})
     
     if not case:
         raise HTTPException(status_code=404, detail="Case bulunamadı")
+    
+    # User sadece kendi case'lerini görebilir, admin hepsini görebilir
+    if current_user['role'] != 'admin' and case.get('user_id') != current_user['id']:
+        raise HTTPException(status_code=403, detail="Bu case'i görme yetkiniz yok")
     
     if isinstance(case['created_at'], str):
         case['created_at'] = datetime.fromisoformat(case['created_at'])
