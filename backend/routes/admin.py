@@ -325,3 +325,93 @@ async def admin_archive_case(case_id: str, admin: dict = Depends(get_admin_user)
     )
     
     return {"message": "Case arşiv durumu güncellendi", "is_archived": new_status}
+
+
+
+# ==================== EMAIL SETTINGS ====================
+
+def mask_password(password: str) -> str:
+    """Şifreyi maskele"""
+    if not password or len(password) < 4:
+        return "***"
+    return f"{password[:2]}{'*' * (len(password) - 2)}"
+
+
+@router.get("/email-settings")
+async def get_email_settings(admin: dict = Depends(get_admin_user)):
+    """E-posta ayarlarını getir (Sadece admin) - Maskelenmiş"""
+    settings = await db.email_settings.find_one({"id": "email_settings"}, {"_id": 0})
+    
+    if not settings:
+        return {
+            "id": "email_settings",
+            "smtp_host": "smtp.visupanel.com",
+            "smtp_port": 587,
+            "smtp_user": "info@visupanel.com",
+            "smtp_password": None,
+            "smtp_password_masked": None,
+            "sender_name": "IZE Case Resolver",
+            "sender_email": "info@visupanel.com",
+            "email_enabled": True
+        }
+    
+    # Maskelenmiş versiyonu ekle
+    response = {
+        "id": settings.get("id", "email_settings"),
+        "smtp_host": settings.get("smtp_host", "smtp.visupanel.com"),
+        "smtp_port": settings.get("smtp_port", 587),
+        "smtp_user": settings.get("smtp_user", "info@visupanel.com"),
+        "smtp_password": settings.get("smtp_password"),
+        "smtp_password_masked": mask_password(settings.get("smtp_password") or ""),
+        "sender_name": settings.get("sender_name", "IZE Case Resolver"),
+        "sender_email": settings.get("sender_email", "info@visupanel.com"),
+        "email_enabled": settings.get("email_enabled", True),
+        "updated_at": settings.get("updated_at")
+    }
+    
+    return response
+
+
+@router.put("/email-settings")
+async def update_email_settings(settings_update: EmailSettingsUpdate, admin: dict = Depends(get_admin_user)):
+    """E-posta ayarlarını güncelle (Sadece admin)"""
+    settings = await db.email_settings.find_one({"id": "email_settings"}, {"_id": 0})
+    
+    if not settings:
+        settings = {
+            "id": "email_settings",
+            "smtp_host": "smtp.visupanel.com",
+            "smtp_port": 587,
+            "smtp_user": "info@visupanel.com",
+            "smtp_password": None,
+            "sender_name": "IZE Case Resolver",
+            "sender_email": "info@visupanel.com",
+            "email_enabled": True
+        }
+    
+    # Güncelle
+    update_data = settings_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        if value is not None:
+            settings[key] = value
+    
+    settings['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    # _id varsa sil
+    if '_id' in settings:
+        del settings['_id']
+    
+    await db.email_settings.update_one(
+        {"id": "email_settings"},
+        {"$set": settings},
+        upsert=True
+    )
+    
+    return {"message": "E-posta ayarları güncellendi"}
+
+
+@router.post("/email-settings/test")
+async def test_email_connection(admin: dict = Depends(get_admin_user)):
+    """SMTP bağlantısını test et (Sadece admin)"""
+    result = await test_smtp_connection()
+    return result
