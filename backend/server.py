@@ -159,6 +159,41 @@ class IZECaseResponse(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 
+# Auth helper functions
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Token'dan mevcut kullanıcıyı alır"""
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
+
+
+async def get_current_active_user(current_user: dict = Depends(get_current_user)) -> dict:
+    """Aktif kullanıcıyı kontrol eder"""
+    if not current_user.get("is_active"):
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def get_admin_user(current_user: dict = Depends(get_current_active_user)) -> dict:
+    """Admin yetkisi kontrol eder"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user
+
+
+# PDF extraction
 import pdfplumber
 import pytesseract
 from pdf2image import convert_from_bytes
