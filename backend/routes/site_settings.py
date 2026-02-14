@@ -23,7 +23,7 @@ async def get_site_settings():
 @router.put("")
 async def update_site_settings(settings_update: SiteSettingsUpdate, admin: dict = Depends(get_admin_user)):
     """Site ayarlarını güncelle (Sadece admin)"""
-    settings = await db.site_settings.find_one({"id": "site_settings"})
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     
     if not settings:
         # Varsayılan ayarlarla başla
@@ -38,6 +38,10 @@ async def update_site_settings(settings_update: SiteSettingsUpdate, admin: dict 
             settings[key] = value
     
     settings['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    # Exclude _id if present before updating
+    if '_id' in settings:
+        del settings['_id']
     
     await db.site_settings.update_one(
         {"id": "site_settings"},
