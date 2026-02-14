@@ -431,7 +431,9 @@ async def register(user_data: UserCreate):
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name,
-        "role": user.role
+        "role": user.role,
+        "free_analyses_remaining": user.free_analyses_remaining,
+        "total_analyses": user.total_analyses
     }
     
     return {
