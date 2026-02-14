@@ -206,6 +206,8 @@ async def get_api_settings(admin: dict = Depends(get_admin_user)):
     if not settings:
         return {
             "id": "api_settings",
+            "emergent_key": None,
+            "emergent_key_masked": None,
             "openai_key": None,
             "openai_key_masked": None,
             "anthropic_key": None,
@@ -218,6 +220,8 @@ async def get_api_settings(admin: dict = Depends(get_admin_user)):
     # Maskelenmiş versiyonları ekle
     response = {
         "id": settings.get("id", "api_settings"),
+        "emergent_key": settings.get("emergent_key"),
+        "emergent_key_masked": mask_api_key(settings.get("emergent_key") or ""),
         "openai_key": settings.get("openai_key"),
         "openai_key_masked": mask_api_key(settings.get("openai_key") or ""),
         "anthropic_key": settings.get("anthropic_key"),
@@ -239,6 +243,7 @@ async def update_api_settings(settings_update: APISettingsUpdate, admin: dict = 
     if not settings:
         settings = {
             "id": "api_settings",
+            "emergent_key": None,
             "openai_key": None,
             "anthropic_key": None,
             "google_key": None,

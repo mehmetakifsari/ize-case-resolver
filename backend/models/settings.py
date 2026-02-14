@@ -8,6 +8,7 @@ class APISettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default="api_settings")
+    emergent_key: Optional[str] = None
     openai_key: Optional[str] = None
     anthropic_key: Optional[str] = None
     google_key: Optional[str] = None
@@ -17,6 +18,7 @@ class APISettings(BaseModel):
 
 class APISettingsUpdate(BaseModel):
     """API ayarları güncelleme modeli"""
+    emergent_key: Optional[str] = None
     openai_key: Optional[str] = None
     anthropic_key: Optional[str] = None
     google_key: Optional[str] = None
