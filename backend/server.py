@@ -521,8 +521,8 @@ async def root():
 
 
 @api_router.post("/warranty-rules", response_model=WarrantyRule)
-async def create_warranty_rule(rule: WarrantyRuleCreate):
-    """Yeni garanti kuralı ekler"""
+async def create_warranty_rule(rule: WarrantyRuleCreate, admin: dict = Depends(get_admin_user)):
+    """Yeni garanti kuralı ekler (Sadece admin)"""
     rule_dict = rule.model_dump()
     rule_obj = WarrantyRule(**rule_dict)
     
