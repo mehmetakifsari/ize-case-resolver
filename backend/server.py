@@ -110,6 +110,7 @@ class IZECase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str  # Yükleyen kullanıcı
     case_title: str
     ize_no: str
     company: str
@@ -142,6 +143,8 @@ class IZECase(BaseModel):
     
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     binder_version_used: str = "default"
+    month: int = Field(default_factory=lambda: datetime.now(timezone.utc).month)
+    year: int = Field(default_factory=lambda: datetime.now(timezone.utc).year)
 
 
 class IZECaseResponse(BaseModel):
