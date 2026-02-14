@@ -1,0 +1,93 @@
+{
+  "summary": "IZE Case Resolver - Iteration 2: Complete testing of Site Settings, Warranty Rules versioning (PDF upload), Admin Cases archive/delete, Pricing page, and Language switcher (TR/EN). All 21 backend tests passed. Fixed MongoDB _id serialization bug in site_settings route. All UI features verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/pytest_results_iter2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed MongoDB _id serialization bug in /app/backend/routes/site_settings.py - was missing {'_id': 0} in find_one query",
+    "All tabs in Site Settings (General, SEO, Analytics, Contact) working correctly",
+    "Warranty Rules PDF upload endpoint properly validates file type",
+    "Language switcher persists selection in localStorage",
+    "Site settings dynamically update page content (site name shown in navbar)"
+  ],
+  "updated_files": [
+    "/app/backend/routes/site_settings.py",
+    "/app/backend/tests/test_new_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (21/21 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@ize.com",
+    "admin_password": "Admin@123!"
+  },
+  "seed_data_creation": "Test warranty rules created and cleaned up during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All new features tested and working: Site Settings with 4 tabs (General, SEO, Analytics, Contact), Warranty Rules with PDF upload and manual add, Admin Cases with archive/delete, Pricing page with 3 plan cards and FAQ, Language switcher (TR/EN). Site settings are being applied dynamically (site name appears as TEST_Site_f9dbfa from previous test data).",
+  "features_tested": {
+    "site_settings_page": {
+      "general_tab": "PASS - Site name, title, description, default language, footer text fields",
+      "seo_tab": "PASS - Meta title, description, keywords, OG Image URL fields",
+      "analytics_tab": "PASS - Google Analytics ID, Google Tag Manager ID, Yandex Metrica ID fields",
+      "contact_tab": "PASS - Company name, contact email, contact phone fields",
+      "save_functionality": "PASS - All settings persist correctly"
+    },
+    "warranty_rules_page": {
+      "pdf_upload_form": "PASS - Version, file selector, keywords fields visible",
+      "manual_add_form": "PASS - Version, rule text, keywords, save/cancel buttons",
+      "tabs": "PASS - Tüm Kurallar (All Rules) and Aktif Kurallar (Active Rules) tabs with counts",
+      "rule_cards": "PASS - Shows version, source type (Manual/PDF), active badge, date",
+      "toggle_active": "PASS - Eye icon button to toggle active status",
+      "delete_rule": "PASS - Trash icon button to delete rule"
+    },
+    "admin_all_cases_page": {
+      "case_listing": "PASS - 6 case cards displayed",
+      "branch_filter": "PASS - Tüm Şubeler dropdown",
+      "status_filter": "PASS - Tümü/Aktif/Arşiv dropdown",
+      "case_actions": "PASS - Görüntüle (View), Arşivle (Archive), Delete (trash) buttons per case"
+    },
+    "pricing_page": {
+      "free_plan_card": "PASS - 0₺/ay, 5 free analyses, features listed, Ücretsiz Başla button",
+      "pro_plan_card": "PASS - En Popüler badge, Yakında (Coming Soon), features listed",
+      "enterprise_plan_card": "PASS - Özel Fiyatlandırma, enterprise features, Contact Sales button",
+      "faq_section": "PASS - 3 FAQ items displayed with questions and answers"
+    },
+    "language_switcher": {
+      "tr_to_en": "PASS - Click TR shows EN, all text switches to English",
+      "en_to_tr": "PASS - Click EN shows TR, all text switches to Turkish",
+      "persistence": "PASS - Language selection persists in localStorage"
+    }
+  },
+  "api_endpoints_tested": {
+    "/api/site-settings GET": "200 - Public endpoint, returns settings or defaults",
+    "/api/site-settings PUT": "200 - Admin only, updates all setting categories",
+    "/api/warranty-rules GET": "200 - Returns all rules list",
+    "/api/warranty-rules GET ?active_only=true": "200 - Returns only active rules",
+    "/api/warranty-rules POST": "200 - Creates manual warranty rule",
+    "/api/warranty-rules/{id} DELETE": "200 - Deletes warranty rule",
+    "/api/warranty-rules/{id}/toggle-active PATCH": "200 - Toggles active status",
+    "/api/warranty-rules/upload-pdf POST": "422/400 - Validates PDF file requirement",
+    "/api/admin/cases GET": "200 - Returns all cases with filters",
+    "/api/admin/cases/{id}/archive PATCH": "200/404 - Archive endpoint exists",
+    "/api/admin/cases/{id} DELETE": "200/404 - Delete endpoint exists"
+  },
+  "bug_fixed": {
+    "file": "/app/backend/routes/site_settings.py",
+    "issue": "MongoDB ObjectId serialization error in PUT endpoint response",
+    "root_cause": "find_one was not excluding _id field when retrieving existing settings",
+    "fix": "Added {'_id': 0} to find_one projection and added explicit _id deletion before update"
+  }
+}
