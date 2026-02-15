@@ -558,9 +558,25 @@ const RegisterPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [branches, setBranches] = useState(DEFAULT_BRANCHES);
   const { register, user } = useAuth();
-  const { t } = useLanguage();
+  const { t, siteSettings } = useLanguage();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/public/branches`);
+      if (response.data && response.data.length > 0) {
+        setBranches(response.data.map(b => b.name));
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -607,7 +623,11 @@ const RegisterPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-8">
       <Card className="w-full max-w-md" data-testid="register-card">
         <CardHeader className="text-center">
-          <FileText className="w-12 h-12 mx-auto mb-2 text-primary" />
+          {siteSettings?.site_logo_url ? (
+            <img src={siteSettings.site_logo_url} alt={siteSettings?.site_name || "Logo"} className="h-12 mx-auto mb-2 object-contain" />
+          ) : (
+            <FileText className="w-12 h-12 mx-auto mb-2 text-primary" />
+          )}
           <CardTitle className="text-2xl">{t("register")}</CardTitle>
           <CardDescription>
             <Badge variant="outline" className="mt-2">
