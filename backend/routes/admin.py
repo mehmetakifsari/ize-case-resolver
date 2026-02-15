@@ -27,9 +27,13 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
     total_cases = await db.ize_cases.count_documents({})
     archived_cases = await db.ize_cases.count_documents({"is_archived": True})
     
+    # Şubeleri veritabanından al
+    branches = await db.branches.find({"is_active": True}, {"_id": 0}).to_list(100)
+    branch_names = [b["name"] for b in branches] if branches else DEFAULT_BRANCHES
+    
     # Şubelere göre case dağılımı
     branch_stats = {}
-    for branch in BRANCHES:
+    for branch in branch_names:
         count = await db.ize_cases.count_documents({"branch": branch})
         branch_stats[branch] = count
     
