@@ -315,6 +315,17 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 37. ✅ .env.example files
 38. ✅ Docker & Coolify deployment ready
 
+### Session 5 (2026-02-15 - Current)
+39. ✅ PDF yüklemede şube seçimi kaldırıldı (kayıttaki şube otomatik kullanılıyor)
+40. ✅ Admin panelden kullanıcı ekleme özelliği
+41. ✅ Kullanıcı kredisi manuel ayarlama
+42. ✅ Sınırsız kredi verme/kaldırma özelliği
+43. ✅ Şube Yönetimi sayfası (dinamik şube ekleme/silme)
+44. ✅ Fiyat Yönetimi sayfası (kredi paketleri yönetimi)
+45. ✅ Admin IZE Analizi yapabilme (menüde IZE Analizi linki)
+46. ✅ Public pricing API endpoint
+47. ✅ Public branches API endpoint
+
 ## Test Credentials
 - **Admin:** admin@ize.com / Admin@123!
 - **Test User:** test@example.com / Test@123!
