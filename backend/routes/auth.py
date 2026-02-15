@@ -52,6 +52,10 @@ async def register(user_data: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="Bu email adresi zaten kayıtlı")
     
+    # E-posta doğrulama tokenı oluştur
+    verification_token = str(uuid.uuid4())
+    verification_expires = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    
     # Kullanıcı oluştur
     hashed_password = get_password_hash(user_data.password)
     user = UserInDB(
@@ -60,13 +64,22 @@ async def register(user_data: UserCreate):
         phone_number=user_data.phone_number,
         branch=user_data.branch,
         role=user_data.role,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        is_email_verified=False  # Varsayılan: doğrulanmamış
     )
     
     user_dict = user.model_dump()
     user_dict['created_at'] = user_dict['created_at'].isoformat()
+    user_dict['verification_token'] = verification_token
+    user_dict['verification_expires'] = verification_expires
     
     await db.users.insert_one(user_dict)
+    
+    # Doğrulama e-postası gönder (arka planda)
+    try:
+        await send_verification_email(user.email, user.full_name, verification_token)
+    except Exception as e:
+        print(f"E-posta doğrulama gönderimi hatası: {e}")
     
     # Token oluştur
     access_token = create_access_token(data={"sub": user.id, "role": user.role})
@@ -79,7 +92,8 @@ async def register(user_data: UserCreate):
         "branch": user.branch,
         "role": user.role,
         "free_analyses_remaining": user.free_analyses_remaining,
-        "total_analyses": user.total_analyses
+        "total_analyses": user.total_analyses,
+        "is_email_verified": False
     }
     
     return {
