@@ -682,7 +682,11 @@ const PricingPage = () => {
       <nav className="border-b bg-white dark:bg-gray-900 px-4 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <FileText className="w-8 h-8 text-primary" />
+            {siteSettings?.site_logo_url ? (
+              <img src={siteSettings.site_logo_url} alt={siteSettings?.site_name || "Logo"} className="h-8 object-contain" />
+            ) : (
+              <FileText className="w-8 h-8 text-primary" />
+            )}
             <span className="text-xl font-bold">{siteSettings?.site_name || t("appName")}</span>
           </Link>
           <div className="flex items-center gap-2">
