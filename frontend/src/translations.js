@@ -648,6 +648,14 @@ export const translations = {
     uploadFavicon: "Upload Favicon",
     logoUrl: "Logo URL (png, jpg, svg)",
     faviconUrl: "Favicon URL (ico, png)",
+    changeLogo: "Change",
+    changeFavicon: "Change",
+    orEnterUrl: "or enter URL",
+    uploading: "Uploading...",
+    uploadSuccess: "File uploaded successfully!",
+    uploadError: "Error uploading file",
+    invalidFileType: "Invalid file type. Upload PNG, JPG, GIF, SVG, ICO or WEBP.",
+    fileTooLarge: "File too large. Maximum 5MB.",
     
     // Email Verification
     verifyingEmail: "Verifying your email address...",
