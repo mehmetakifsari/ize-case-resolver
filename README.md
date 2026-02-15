@@ -161,7 +161,7 @@ EMERGENT_LLM_KEY=sk-emergent-xxxxx
 
 ### Frontend (.env)
 ```env
-REACT_APP_BACKEND_URL=https://ize-dashboard.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://pdf-analyzer-78.preview.emergentagent.com
 ```
 
 ## 💡 Kullanım Örnekleri
@@ -221,7 +221,7 @@ curl http://localhost:8001/api/warranty-rules
 ```
 
 ### Frontend Test
-Tarayıcınızda: `https://ize-dashboard.preview.emergentagent.com`
+Tarayıcınızda: `https://pdf-analyzer-78.preview.emergentagent.com`
 
 ## 📝 Notlar
 
