@@ -2251,26 +2251,77 @@ const AdminSiteSettings = () => {
               <Separator className="my-4" />
               <h3 className="font-semibold text-lg flex items-center gap-2"><Image className="w-5 h-5" />{t("siteAppearance")}</h3>
               
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>{t("siteLogo")}</Label>
-                  <Input value={settings?.site_logo_url || ""} onChange={(e) => handleChange("site_logo_url", e.target.value)} placeholder="https://example.com/logo.png" />
-                  <p className="text-xs text-gray-500 mt-1">{t("logoUrl")}</p>
-                  {settings?.site_logo_url && (
-                    <div className="mt-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
-                      <img src={settings.site_logo_url} alt="Logo Preview" className="max-h-16 object-contain" onError={(e) => e.target.style.display='none'} />
-                    </div>
-                  )}
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label className="font-medium">{t("siteLogo")}</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                    {settings?.site_logo_url ? (
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                          <img src={settings.site_logo_url} alt="Logo Preview" className="max-h-20 mx-auto object-contain" onError={(e) => e.target.style.display='none'} />
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{settings.site_logo_url}</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button variant="outline" size="sm" asChild disabled={uploading.logo}>
+                            <label className="cursor-pointer">
+                              <Upload className="w-4 h-4 mr-1" />
+                              {uploading.logo ? t("uploading") : t("changeLogo")}
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0], 'logo')} />
+                            </label>
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleChange("site_logo_url", "")}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block py-4">
+                        <Upload className="w-10 h-10 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{uploading.logo ? t("uploading") : t("uploadLogo")}</p>
+                        <p className="text-xs text-gray-400 mt-1">PNG, JPG, SVG (max 5MB)</p>
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0], 'logo')} disabled={uploading.logo} />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">{t("orEnterUrl")}</Label>
+                    <Input value={settings?.site_logo_url || ""} onChange={(e) => handleChange("site_logo_url", e.target.value)} placeholder="https://example.com/logo.png" className="mt-1" />
+                  </div>
                 </div>
-                <div>
-                  <Label>{t("siteFavicon")}</Label>
-                  <Input value={settings?.favicon_url || ""} onChange={(e) => handleChange("favicon_url", e.target.value)} placeholder="https://example.com/favicon.ico" />
-                  <p className="text-xs text-gray-500 mt-1">{t("faviconUrl")}</p>
-                  {settings?.favicon_url && (
-                    <div className="mt-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
-                      <img src={settings.favicon_url} alt="Favicon Preview" className="w-8 h-8 object-contain" onError={(e) => e.target.style.display='none'} />
-                    </div>
-                  )}
+                
+                {/* Favicon Upload */}
+                <div className="space-y-3">
+                  <Label className="font-medium">{t("siteFavicon")}</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                    {settings?.favicon_url ? (
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 flex justify-center">
+                          <img src={settings.favicon_url} alt="Favicon Preview" className="w-12 h-12 object-contain" onError={(e) => e.target.style.display='none'} />
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{settings.favicon_url}</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button variant="outline" size="sm" asChild disabled={uploading.favicon}>
+                            <label className="cursor-pointer">
+                              <Upload className="w-4 h-4 mr-1" />
+                              {uploading.favicon ? t("uploading") : t("changeFavicon")}
+                              <input type="file" className="hidden" accept="image/*,.ico" onChange={(e) => handleImageUpload(e.target.files[0], 'favicon')} />
+                            </label>
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleChange("favicon_url", "")}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block py-4">
+                        <Upload className="w-10 h-10 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{uploading.favicon ? t("uploading") : t("uploadFavicon")}</p>
+                        <p className="text-xs text-gray-400 mt-1">ICO, PNG, SVG (max 5MB)</p>
+                        <input type="file" className="hidden" accept="image/*,.ico" onChange={(e) => handleImageUpload(e.target.files[0], 'favicon')} disabled={uploading.favicon} />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">{t("orEnterUrl")}</Label>
+                    <Input value={settings?.favicon_url || ""} onChange={(e) => handleChange("favicon_url", e.target.value)} placeholder="https://example.com/favicon.ico" className="mt-1" />
+                  </div>
                 </div>
               </div>
               
