@@ -5,7 +5,8 @@ import {
   Upload, FileText, CheckCircle, XCircle, AlertCircle, List, Settings, Home, 
   Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, Clock, Menu, X,
   BarChart3, Archive, ChevronDown, ChevronRight, Plus, Trash2, Edit, Eye, EyeOff,
-  Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard
+  Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard,
+  Banknote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import translations from "./translations";
+import { PaymentPage, PaymentSuccessPage, PaymentPendingPage, PaymentCancelPage } from "./pages/PaymentPage";
+import { AdminPayments } from "./pages/Admin/AdminPayments";
 import "@/App.css";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
