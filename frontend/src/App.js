@@ -1074,12 +1074,31 @@ const AdminDashboard = () => {
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
+  const [branches, setBranches] = useState(DEFAULT_BRANCHES);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ branch: "", role: "" });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [creditAmount, setCreditAmount] = useState(10);
+  const [newUser, setNewUser] = useState({ email: "", password: "", full_name: "", phone_number: "", branch: "", role: "user" });
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState("");
   const { token } = useAuth();
   const { t } = useLanguage();
 
-  useEffect(() => { fetchUsers(); }, [filter]);
+  useEffect(() => { fetchUsers(); fetchBranches(); }, [filter]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/public/branches`);
+      if (response.data && response.data.length > 0) {
+        setBranches(response.data.map(b => b.name));
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -1098,10 +1117,43 @@ const AdminUsers = () => {
   };
 
   const toggleActive = async (userId) => { await axios.patch(`${API}/admin/users/${userId}/toggle-active`, {}, { headers: { Authorization: `Bearer ${token}` } }); fetchUsers(); };
-  const addCredit = async (userId) => { await axios.patch(`${API}/admin/users/${userId}/add-credit?amount=5`, {}, { headers: { Authorization: `Bearer ${token}` } }); fetchUsers(); };
+  
+  const toggleUnlimitedCredits = async (userId, current) => { 
+    await axios.patch(`${API}/admin/users/${userId}/set-unlimited-credits?unlimited=${!current}`, {}, { headers: { Authorization: `Bearer ${token}` } }); 
+    fetchUsers(); 
+  };
+  
+  const setCredits = async () => {
+    if (!selectedUser) return;
+    await axios.patch(`${API}/admin/users/${selectedUser.id}/set-credits?amount=${creditAmount}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    setShowCreditDialog(false);
+    setSelectedUser(null);
+    fetchUsers();
+  };
+  
   const deleteUser = async (userId) => { if (!window.confirm(t("deleteUserConfirm"))) return; await axios.delete(`${API}/admin/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } }); fetchUsers(); };
 
-  // Toplam e-posta sayısı
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    setAddUserLoading(true);
+    setAddUserError("");
+    try {
+      await axios.post(`${API}/admin/users`, newUser, { headers: { Authorization: `Bearer ${token}` } });
+      setShowAddUser(false);
+      setNewUser({ email: "", password: "", full_name: "", phone_number: "", branch: "", role: "user" });
+      fetchUsers();
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setAddUserError(detail.map(d => d.msg).join(", "));
+      } else {
+        setAddUserError(detail || t("error"));
+      }
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
   const totalEmails = users.reduce((sum, user) => sum + (user.emails_sent || 0), 0);
 
   return (
@@ -1111,17 +1163,62 @@ const AdminUsers = () => {
           <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-users-title">{t("userManagement")}</h1>
           <p className="text-sm text-gray-500 mt-1">{t("totalEmailsSent")}: <span className="font-semibold text-primary">{totalEmails}</span></p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("allBranches")} /></SelectTrigger>
-            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={filter.role || "all"} onValueChange={(v) => setFilter({...filter, role: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[120px]"><SelectValue placeholder={t("allRoles")} /></SelectTrigger>
             <SelectContent><SelectItem value="all">{t("allRoles")}</SelectItem><SelectItem value="admin">{t("admin")}</SelectItem><SelectItem value="user">{t("user")}</SelectItem></SelectContent>
           </Select>
+          <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="w-4 h-4 mr-2" />{t("addUser")}</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t("addUser")}</DialogTitle>
+                <DialogDescription>{t("addUserDesc")}</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddUser} className="space-y-4">
+                <div><Label>{t("fullName")} *</Label><Input value={newUser.full_name} onChange={(e) => setNewUser({...newUser, full_name: e.target.value})} required /></div>
+                <div><Label>{t("email")} *</Label><Input type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} required /></div>
+                <div><Label>{t("password")} *</Label><Input type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} required /><p className="text-xs text-gray-500 mt-1">{t("passwordRequirements")}</p></div>
+                <div><Label>{t("phone")}</Label><Input value={newUser.phone_number} onChange={(e) => setNewUser({...newUser, phone_number: e.target.value})} /></div>
+                <div><Label>{t("branch")}</Label>
+                  <Select value={newUser.branch} onValueChange={(v) => setNewUser({...newUser, branch: v})}>
+                    <SelectTrigger><SelectValue placeholder={t("selectBranch")} /></SelectTrigger>
+                    <SelectContent>{branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>{t("role")}</Label>
+                  <Select value={newUser.role} onValueChange={(v) => setNewUser({...newUser, role: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="user">{t("user")}</SelectItem><SelectItem value="admin">{t("admin")}</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                {addUserError && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{addUserError}</AlertDescription></Alert>}
+                <DialogFooter><Button type="submit" disabled={addUserLoading}>{addUserLoading ? t("loading") : t("add")}</Button></DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+
+      {/* Kredi Ayarlama Dialog */}
+      <Dialog open={showCreditDialog} onOpenChange={setShowCreditDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("setCredits")}</DialogTitle>
+            <DialogDescription>{selectedUser?.full_name} - {t("currentCredits")}: {selectedUser?.free_analyses_remaining}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div><Label>{t("newCreditAmount")}</Label><Input type="number" min="0" value={creditAmount} onChange={(e) => setCreditAmount(parseInt(e.target.value) || 0)} /></div>
+          </div>
+          <DialogFooter><Button onClick={setCredits}>{t("save")}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {loading ? <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div> : (
         <div className="space-y-4">
@@ -1130,17 +1227,23 @@ const AdminUsers = () => {
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2"><span className="font-medium">{user.full_name}</span><Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge><Badge variant={user.is_active ? "default" : "destructive"}>{user.is_active ? t("active") : t("inactive")}</Badge></div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{user.full_name}</span>
+                      <Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge>
+                      <Badge variant={user.is_active ? "default" : "destructive"}>{user.is_active ? t("active") : t("inactive")}</Badge>
+                      {user.has_unlimited_credits && <Badge className="bg-purple-100 text-purple-800"><Infinity className="w-3 h-3 mr-1" />{t("unlimited")}</Badge>}
+                    </div>
                     <p className="text-sm text-gray-500">{user.email}</p>
                     <div className="flex gap-4 text-xs text-gray-500 flex-wrap">
                       {user.phone_number && <span><Phone className="w-3 h-3 inline mr-1" />{user.phone_number}</span>}
                       {user.branch && <span><Building className="w-3 h-3 inline mr-1" />{user.branch}</span>}
-                      <span><CreditCard className="w-3 h-3 inline mr-1" />{t("credit")}: {user.free_analyses_remaining}</span>
+                      <span><CreditCard className="w-3 h-3 inline mr-1" />{t("credit")}: {user.has_unlimited_credits ? "∞" : user.free_analyses_remaining}</span>
                       <span><Mail className="w-3 h-3 inline mr-1" />{t("emailsSent")}: <span className="font-medium text-primary">{user.emails_sent || 0}</span></span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => addCredit(user.id)}><Plus className="w-4 h-4 mr-1" />5 {t("credit")}</Button>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedUser(user); setCreditAmount(user.free_analyses_remaining || 0); setShowCreditDialog(true); }}><CreditCard className="w-4 h-4 mr-1" />{t("setCredits")}</Button>
+                    <Button size="sm" variant={user.has_unlimited_credits ? "secondary" : "outline"} onClick={() => toggleUnlimitedCredits(user.id, user.has_unlimited_credits)}><Infinity className="w-4 h-4 mr-1" />{user.has_unlimited_credits ? t("removeUnlimited") : t("giveUnlimited")}</Button>
                     <Button size="sm" variant="outline" onClick={() => toggleActive(user.id)}>{user.is_active ? t("makeInactive") : t("makeActive")}</Button>
                     <Button size="sm" variant="destructive" onClick={() => deleteUser(user.id)}><Trash2 className="w-4 h-4" /></Button>
                   </div>
