@@ -8,9 +8,10 @@ Bu rehber, IZE Case Resolver uygulamasını Coolify üzerinde deploy etmenizi sa
 
 ## 📋 Ön Gereksinimler
 
-- Coolify kurulu bir sunucu
+- Coolify kurulu bir sunucu (VDS/VPS)
 - Domain adı (örn: visupanel.com)
 - GitHub hesabı
+- OpenAI API Key (https://platform.openai.com/api-keys)
 
 ---
 
@@ -23,23 +24,43 @@ Bu rehber, IZE Case Resolver uygulamasını Coolify üzerinde deploy etmenizi sa
 
 ---
 
-## Adım 1: DNS Ayarları
+## Adım 1: DNS Ayarları (Hostinger)
 
-Cloudflare veya domain sağlayıcınızda A kayıtları ekleyin:
+Hostinger DNS yönetiminde **A kayıtları** ekleyin:
 
 ```
-ize.visupanel.com       →  SUNUCU_IP
-api.ize.visupanel.com   →  SUNUCU_IP
+Tip: A
+Host: ize
+Değer: SUNUCU_IP_ADRESİ
+TTL: 14400
+
+Tip: A  
+Host: api.ize
+Değer: SUNUCU_IP_ADRESİ
+TTL: 14400
 ```
 
-> ⚠️ **Önemli:** Coolify SSL sertifikası alacağı için Cloudflare proxy'yi kapatın veya Full (Strict) SSL kullanın.
+### ⚠️ ÖNEMLİ SSL AYARLARI
+
+**Cloudflare kullanıyorsanız:**
+- Proxy'yi **KAPATMALISINIZ** (DNS Only - Gri bulut)
+- VEYA SSL/TLS ayarını **"Full (Strict)"** yapın
+
+**Hostinger DNS kullanıyorsanız:**
+- Ek bir ayar gerekmez, Coolify SSL sertifikasını otomatik alır
+
+**Port Erişimi:**
+- 3000 ve 8001 portlarına doğrudan erişim **gerekmez**
+- Traefik reverse proxy tüm trafiği 80/443 üzerinden yönlendirir
+- Tarayıcıda `ize.visupanel.com:3000` şeklinde **denemeyin** - sadece `https://ize.visupanel.com` kullanın
 
 ---
 
 ## Adım 2: GitHub'a Push
 
-Emergent platformunda **"Save to GitHub"** butonunu kullanın veya manuel olarak:
+Emergent platformunda **"Save to GitHub"** butonunu kullanın.
 
+**Veya manuel olarak:**
 ```bash
 git init
 git add .
@@ -52,63 +73,60 @@ git push -u origin main
 
 ## Adım 3: Coolify'da Proje Oluşturma
 
-### 3.1 Docker Compose Projesi Oluştur
+### 3.1 Network Oluşturma (İlk seferde)
+
+Coolify terminalinde:
+```bash
+docker network create coolify
+```
+
+### 3.2 Docker Compose Projesi Oluştur
 
 1. Coolify paneline giriş yapın
 2. **"+ Add Resource"** → **"Docker Compose"** seçin
-3. **"GitHub"** seçin ve repo'nuzu bağlayın
-4. Ayarlar:
+3. **"GitHub"** veya **"Public Repository"** seçin
+4. Repo URL'nizi girin
+5. Ayarlar:
    - **Branch:** `main`
    - **Docker Compose Location:** `docker-compose.yml`
    - **Build Pack:** Docker Compose
 
-### 3.2 Domain Ayarları
+### 3.3 Domain Ayarları (Coolify Panelinde)
 
-Coolify'da her servis için domain ekleyin:
+**ÖNEMLİ:** Coolify'da her servis için domain'leri ayrı ayrı tanımlayın:
 
-**Frontend servisi için:**
-- Domain: `ize.visupanel.com`
-- Port: `3000`
+1. **Backend servisi** seçin → Settings
+   - Domain: `api.ize.visupanel.com`
+   - ✅ "Generate SSL Certificate" aktif
 
-**Backend servisi için:**
-- Domain: `api.ize.visupanel.com`
-- Port: `8001`
+2. **Frontend servisi** seçin → Settings  
+   - Domain: `ize.visupanel.com`
+   - ✅ "Generate SSL Certificate" aktif
 
 ---
 
 ## Adım 4: Environment Variables
 
-Coolify'da **Environment Variables** bölümüne şu değişkenleri ekleyin:
-
-### Backend (.env)
+Coolify'da **Environment Variables** bölümüne ekleyin:
 
 ```env
-# MongoDB (Coolify içinde)
-MONGO_URL=mongodb://mongodb:27017
-DB_NAME=ize_database
+# ZORUNLU
+OPENAI_API_KEY=sk-proj-xxx (OpenAI'den aldığınız key)
+JWT_SECRET_KEY=rastgele-guclu-32-karakter-key
 
-# CORS
-CORS_ORIGINS=*
-
-# JWT Secret (Güçlü bir key oluşturun!)
-JWT_SECRET_KEY=cok-guclu-rastgele-bir-anahtar-32-karakter
-
-# OpenAI / Emergent LLM Key
-EMERGENT_LLM_KEY=sk-emergent-xxxxx
-
-# Stripe (Opsiyonel - Panelden de ayarlanabilir)
-STRIPE_API_KEY=sk_live_xxxxx
-
-# iyzico (Opsiyonel - Panelden de ayarlanabilir)
-IYZICO_API_KEY=xxxxx
-IYZICO_SECRET_KEY=xxxxx
-IYZICO_BASE_URL=api.iyzipay.com
+# OPSİYONEL (Admin panelinden de ayarlanabilir)
+# STRIPE_API_KEY=sk_live_xxx
+# IYZICO_API_KEY=xxx
+# IYZICO_SECRET_KEY=xxx
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=email@domain.com
+# SMTP_PASSWORD=xxx
 ```
 
-### Frontend (.env)
-
-```env
-REACT_APP_BACKEND_URL=https://api.ize.visupanel.com
+**JWT Key Oluşturma (Terminal):**
+```bash
+openssl rand -hex 32
 ```
 
 ---
@@ -119,11 +137,13 @@ REACT_APP_BACKEND_URL=https://api.ize.visupanel.com
 2. Build loglarını takip edin (~5-10 dakika)
 3. Tüm servisler yeşil olduğunda hazır!
 
+**İlk deploy'da SSL sertifikası alınması 1-2 dakika sürebilir.**
+
 ---
 
 ## Adım 6: İlk Admin Hesabı Oluşturma
 
-Deploy sonrası Coolify'da terminal açın:
+Deploy sonrası Coolify'da **ize-backend** container'ına terminal açın:
 
 ```bash
 docker exec -it ize-backend python3 << 'EOF'
@@ -160,56 +180,13 @@ EOF
 
 ---
 
-## Adım 7: Panelden Yapılacak Ayarlar
-
-Admin paneline giriş yapın: `https://ize.visupanel.com/login`
-
-### 7.1 Ödeme Ayarları (`/admin/payment-settings`)
-
-**Stripe:**
-- Mode: Live (Production için)
-- Live Publishable Key: `pk_live_xxx`
-- Live Secret Key: `sk_live_xxx`
-
-**iyzico:**
-- Mode: Production
-- Production API Key: `xxx`
-- Production Secret Key: `xxx`
-
-### 7.2 Fatura Ayarları (`/admin/payment-settings` → Fatura sekmesi)
-
-**Şirket Bilgileri:**
-- Şirket Adı
-- Vergi Dairesi
-- Vergi Numarası
-- Adres, Telefon, Email
-
-**E-Fatura Entegrasyonu (Opsiyonel):**
-- Paraşüt, Bizimhesap veya Birfatura API bilgileri
-
-### 7.3 E-posta Ayarları (`/admin/email-settings`)
-
-**SMTP Ayarları:**
-- Host: `smtp.yourprovider.com`
-- Port: `587`
-- Kullanıcı: `info@visupanel.com`
-- Şifre: `xxx`
-
-### 7.4 Site Ayarları (`/admin/site-settings`)
-
-- Site başlığı, açıklaması
-- SEO meta bilgileri
-- Google Analytics / Yandex Metrica kodları
-- Sosyal medya linkleri
-
----
-
 ## ✅ Erişim Bilgileri
 
 | | |
 |---|---|
 | **Frontend URL** | https://ize.visupanel.com |
 | **API URL** | https://api.ize.visupanel.com |
+| **API Health Check** | https://api.ize.visupanel.com/api/health |
 | **Admin Email** | admin@visupanel.com |
 | **Admin Şifre** | Admin@123! (değiştirin!) |
 
@@ -217,28 +194,56 @@ Admin paneline giriş yapın: `https://ize.visupanel.com/login`
 
 ## 🔧 Sorun Giderme
 
-### Build hatası
+### SSL Hatası Alıyorum
+
+1. **DNS propagasyonunu bekleyin** (24 saate kadar sürebilir)
+   ```bash
+   # DNS kontrolü
+   nslookup ize.visupanel.com
+   nslookup api.ize.visupanel.com
+   ```
+
+2. **Coolify'da SSL sertifikasını yenileyin**
+   - Servis → Settings → "Generate SSL Certificate" → Redeploy
+
+3. **Cloudflare kullanıyorsanız**
+   - Proxy'yi kapatın (DNS Only)
+   - VEYA SSL ayarını "Full (Strict)" yapın
+
+### Port Erişim Hatası
+
+- `ize.visupanel.com:3000` şeklinde **erişmeyin**
+- Sadece `https://ize.visupanel.com` kullanın
+- Traefik tüm trafiği 80/443 üzerinden yönlendirir
+
+### Build Hatası
+
 ```bash
 # Coolify'da "Redeploy" → "Force Rebuild" seçin
 ```
 
-### Container logları
+### Container Logları
+
 ```bash
 docker logs ize-backend -f --tail 100
 docker logs ize-frontend -f --tail 100
+docker logs ize-mongodb -f --tail 100
 ```
 
-### MongoDB bağlantı testi
+### MongoDB Bağlantı Testi
+
 ```bash
 docker exec -it ize-mongodb mongosh --eval "db.stats()"
 ```
 
-### Backend sağlık kontrolü
+### Backend Health Check
+
 ```bash
 curl https://api.ize.visupanel.com/api/health
 ```
 
-### OCR kontrolü
+### OCR Dil Kontrolü
+
 ```bash
 docker exec -it ize-backend tesseract --list-langs
 # deu, eng, tur görünmeli
@@ -249,6 +254,7 @@ docker exec -it ize-backend tesseract --list-langs
 ## 💾 Yedekleme
 
 ### MongoDB Yedekleme
+
 ```bash
 # Yedek al
 docker exec ize-mongodb mongodump --out /data/backup
@@ -264,11 +270,13 @@ docker exec ize-mongodb mongorestore /data/backup
 ## 🔄 Güncelleme
 
 ### Otomatik (Webhook)
+
 1. Coolify'da projeye gidin
 2. **Settings** → **Webhooks** → Enable
 3. GitHub repo'da webhook URL'i ekleyin
 
 ### Manuel
+
 1. GitHub'a push yapın
 2. Coolify'da **"Redeploy"** butonuna tıklayın
 
