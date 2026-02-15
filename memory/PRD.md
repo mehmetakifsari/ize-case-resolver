@@ -215,15 +215,29 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 19. ✅ Automatic email notification after analysis with PDF attachment
 20. ✅ SMTP connection test feature
 21. ✅ Email enabled/disabled toggle
-22. ✅ All features tested (100% pass rate)
+22. ✅ Per-user email counter (emails_sent field)
+23. ✅ Total emails sent on Dashboard
+24. ✅ End-to-end email test completed (akifsari@kocaslanlar.com.tr) - VERIFIED BY USER
+
+## Test Credentials
+- **Admin:** admin@ize.com / Admin@123!
+- **Test User:** test@example.com / Test@123!
+- **Akif (Test):** akifsari@kocaslanlar.com.tr / AkifTest@2024!
+
+## SMTP Configuration
+- **Host:** smtp.visupanel.com
+- **Port:** 587
+- **User:** info@visupanel.com
+- **Sender:** IZE Case Resolver
 
 ## Upcoming Tasks (P1)
 - [ ] Deploy to Coolify (visupanel.com)
-- [ ] Configure production SMTP settings
 - [ ] User onboarding flow
+- [ ] Bulk operations (export, multi-select)
 
 ## Future Tasks (P2)
 - [ ] Export reports to Excel/PDF
 - [ ] Bulk PDF upload
 - [ ] API documentation (Swagger UI)
 - [ ] Activity logging/audit trail
+- [ ] Email templates customization
