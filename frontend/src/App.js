@@ -1867,6 +1867,22 @@ const AdminSiteSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="social">
+          <Card>
+            <CardHeader><CardTitle>{t("socialMedia")}</CardTitle><CardDescription>{language === "tr" ? "Footer'da görünecek sosyal medya linkleri" : "Social media links for footer"}</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Facebook</Label><Input value={settings?.social_media?.facebook || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, facebook: e.target.value })} placeholder="https://facebook.com/..." /></div>
+                <div><Label>X (Twitter)</Label><Input value={settings?.social_media?.twitter || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, twitter: e.target.value })} placeholder="https://x.com/..." /></div>
+                <div><Label>Instagram</Label><Input value={settings?.social_media?.instagram || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, instagram: e.target.value })} placeholder="https://instagram.com/..." /></div>
+                <div><Label>LinkedIn</Label><Input value={settings?.social_media?.linkedin || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, linkedin: e.target.value })} placeholder="https://linkedin.com/company/..." /></div>
+                <div><Label>YouTube</Label><Input value={settings?.social_media?.youtube || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, youtube: e.target.value })} placeholder="https://youtube.com/@..." /></div>
+                <div><Label>WhatsApp</Label><Input value={settings?.social_media?.whatsapp || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, whatsapp: e.target.value })} placeholder="+905551234567" /></div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </AdminLayout>
   );
