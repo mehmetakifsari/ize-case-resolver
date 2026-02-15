@@ -291,7 +291,10 @@ async def test_smtp_connection() -> dict:
         smtp_user = settings.get('smtp_user', 'info@visupanel.com')
         smtp_password = settings.get('smtp_password', '')
         
+        # SSL context - sertifika doğrulamasını gevşet
         context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
         
         with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
             server.ehlo()
