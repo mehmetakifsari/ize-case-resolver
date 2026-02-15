@@ -28,11 +28,15 @@ services:
       - CORS_ORIGINS=*
       - EMERGENT_LLM_KEY=${EMERGENT_LLM_KEY}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-super-secret-jwt-key-change-this}
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-}
+      - IYZICO_API_KEY=${IYZICO_API_KEY:-}
+      - IYZICO_SECRET_KEY=${IYZICO_SECRET_KEY:-}
+      - IYZICO_BASE_URL=${IYZICO_BASE_URL:-api.iyzipay.com}
     networks:
       - ize-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ize-backend.rule=Host(`api.visupanel.com`)"
+      - "traefik.http.routers.ize-backend.rule=Host(`api.ize.visupanel.com`)"
       - "traefik.http.routers.ize-backend.entrypoints=https"
       - "traefik.http.routers.ize-backend.tls=true"
       - "traefik.http.routers.ize-backend.tls.certresolver=letsencrypt"
@@ -44,7 +48,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_BACKEND_URL=https://api.visupanel.com
+        - REACT_APP_BACKEND_URL=https://api.ize.visupanel.com
     container_name: ize-frontend
     restart: unless-stopped
     depends_on:
