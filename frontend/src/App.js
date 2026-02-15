@@ -817,6 +817,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
     { path: "/admin/users", icon: Users, label: t("users") },
     { path: "/admin/cases", icon: List, label: t("allCases") },
+    { path: "/admin/payments", icon: Banknote, label: t("payments") },
     { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
     { path: "/admin/api-settings", icon: Key, label: t("apiSettings") },
     { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
