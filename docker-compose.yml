@@ -47,11 +47,19 @@ services:
       - ize-network
     labels:
       - "traefik.enable=true"
+      # HTTP Router
       - "traefik.http.routers.ize-backend.rule=Host(`api.ize.visupanel.com`)"
-      - "traefik.http.routers.ize-backend.entrypoints=https"
-      - "traefik.http.routers.ize-backend.tls=true"
-      - "traefik.http.routers.ize-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ize-backend.entrypoints=http"
+      # HTTPS Router
+      - "traefik.http.routers.ize-backend-secure.rule=Host(`api.ize.visupanel.com`)"
+      - "traefik.http.routers.ize-backend-secure.entrypoints=https"
+      - "traefik.http.routers.ize-backend-secure.tls=true"
+      - "traefik.http.routers.ize-backend-secure.tls.certresolver=letsencrypt"
+      # Service
       - "traefik.http.services.ize-backend.loadbalancer.server.port=8001"
+      # HTTP to HTTPS redirect
+      - "traefik.http.middlewares.ize-backend-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.ize-backend.middlewares=ize-backend-redirect"
 
   # Frontend
   frontend:
@@ -68,11 +76,19 @@ services:
       - ize-network
     labels:
       - "traefik.enable=true"
+      # HTTP Router
       - "traefik.http.routers.ize-frontend.rule=Host(`ize.visupanel.com`)"
-      - "traefik.http.routers.ize-frontend.entrypoints=https"
-      - "traefik.http.routers.ize-frontend.tls=true"
-      - "traefik.http.routers.ize-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ize-frontend.entrypoints=http"
+      # HTTPS Router
+      - "traefik.http.routers.ize-frontend-secure.rule=Host(`ize.visupanel.com`)"
+      - "traefik.http.routers.ize-frontend-secure.entrypoints=https"
+      - "traefik.http.routers.ize-frontend-secure.tls=true"
+      - "traefik.http.routers.ize-frontend-secure.tls.certresolver=letsencrypt"
+      # Service
       - "traefik.http.services.ize-frontend.loadbalancer.server.port=80"
+      # HTTP to HTTPS redirect
+      - "traefik.http.middlewares.ize-frontend-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.ize-frontend.middlewares=ize-frontend-redirect"
 
 volumes:
   mongodb_data:
