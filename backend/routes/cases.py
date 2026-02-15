@@ -133,6 +133,11 @@ async def analyze_ize_pdf(
             language="tr"
         )
         if email_result.get("success"):
+            # E-posta sayacını artır
+            await db.users.update_one(
+                {"id": current_user['id']},
+                {"$inc": {"emails_sent": 1}}
+            )
             logger.info(f"E-posta gönderildi: {current_user['email']}")
         else:
             logger.warning(f"E-posta gönderilemedi: {email_result.get('message')}")
