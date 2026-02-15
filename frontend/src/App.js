@@ -2084,9 +2084,9 @@ const AdminPaymentsWrapper = () => {
   const { token } = useAuth();
   const { language, t } = useLanguage();
   return (
-    <Layout>
+    <AdminLayout>
       <AdminPayments token={token} language={language} />
-    </Layout>
+    </AdminLayout>
   );
 };
 
