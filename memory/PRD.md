@@ -198,8 +198,24 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - DELETE /api/admin/users/{id} - Delete user
 - PATCH /api/admin/users/{id}/toggle-active - Toggle user status
 - PATCH /api/admin/users/{id}/add-credit - Add credits
+- **NEW** PATCH /api/admin/users/{id}/set-credits - Set exact credit amount
+- **NEW** PATCH /api/admin/users/{id}/set-unlimited-credits - Give/remove unlimited credits
 - GET /api/admin/settings - Get API settings
 - PUT /api/admin/settings - Update API settings
+
+### Branch Management (NEW - 15 Feb 2026)
+- GET /api/admin/branches - List all branches (Admin)
+- POST /api/admin/branches - Create branch (Admin)
+- DELETE /api/admin/branches/{id} - Delete branch (Admin)
+- PATCH /api/admin/branches/{id}/toggle - Toggle branch active status (Admin)
+- GET /api/settings/public/branches - List active branches (Public)
+
+### Pricing Management (NEW - 15 Feb 2026)
+- GET /api/admin/pricing-plans - List all pricing plans (Admin)
+- POST /api/admin/pricing-plans - Create pricing plan (Admin)
+- PUT /api/admin/pricing-plans/{id} - Update pricing plan (Admin)
+- DELETE /api/admin/pricing-plans/{id} - Delete pricing plan (Admin)
+- GET /api/settings/public/pricing-plans - List active pricing plans (Public)
 
 ### Email Settings (NEW)
 - GET /api/admin/email-settings - Get SMTP settings (Admin only)
