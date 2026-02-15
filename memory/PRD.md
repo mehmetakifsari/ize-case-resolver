@@ -76,6 +76,27 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - PDF fatura oluşturma
 - E-fatura entegrasyonları (Paraşüt, Bizimhesap, Birfatura) - placeholder
 
+### 11. Site Logo & Favicon
+- **Status**: ✅ COMPLETE (15 Şubat 2026)
+- Admin Site Ayarları'ndan Logo ve Favicon URL girişi
+- Dinamik favicon ve title güncelleme
+- Tüm sayfalarda dinamik logo gösterimi
+
+### 12. Email Verification System
+- **Status**: ✅ COMPLETE (15 Şubat 2026)
+- Kayıt sonrası doğrulama e-postası gönderme
+- 24 saat geçerli doğrulama linki
+- Doğrulama sayfası (/verify-email/:token)
+- Doğrulama e-postası yeniden gönderme özelliği
+- Kullanıcı panelinde doğrulama banner'ı
+
+### 13. Credit Purchase Flow
+- **Status**: ✅ COMPLETE (15 Şubat 2026)
+- Admin panelden tanımlanan fiyatlandırma planları
+- Dinamik plan yükleme (public API)
+- Kredi badge'ine tıklayarak ödeme sayfasına yönlendirme
+- TRY/USD/EUR para birimi desteği
+
 ## Architecture
 
 ```
@@ -84,25 +105,30 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 │   ├── server.py        # FastAPI main app
 │   ├── database.py      # MongoDB connection
 │   ├── models/          # Pydantic models
-│   │   ├── user.py
+│   │   ├── user.py      # User, Branch, PricingPlan models
 │   │   ├── case.py
 │   │   ├── warranty.py
 │   │   ├── settings.py
 │   │   └── site_settings.py
 │   ├── routes/          # API endpoints
-│   │   ├── auth.py
+│   │   ├── auth.py      # Login, Register, Email Verification
 │   │   ├── cases.py
-│   │   ├── admin.py
+│   │   ├── admin.py     # User, Branch, Pricing management
 │   │   ├── warranty.py
+│   │   ├── settings.py  # Public pricing & branches
 │   │   └── site_settings.py
 │   └── services/        # Business logic
 │       ├── auth.py
+│       ├── email.py     # SMTP, Verification emails
 │       ├── pdf_processor.py
 │       └── ai_analyzer.py
 ├── frontend/
 │   └── src/
 │       ├── App.js       # React SPA
-│       └── translations.js # TR/EN translations
+│       ├── translations.js # TR/EN translations
+│       └── pages/
+│           ├── PaymentPage.js
+│           └── Admin/
 └── memory/
     └── PRD.md
 ```
@@ -118,6 +144,10 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
   "phone_number": "string",
   "branch": "string",
   "role": "admin|user",
+  "is_email_verified": "boolean",
+  "has_unlimited_credits": "boolean",
+  "verification_token": "string (optional)",
+  "verification_expires": "datetime (optional)",
   "is_active": "boolean",
   "free_analyses_remaining": "integer",
   "total_analyses": "integer",
