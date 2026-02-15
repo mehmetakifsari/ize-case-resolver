@@ -358,6 +358,7 @@ export const translations = {
     welcomeAdmin: "Welcome",
     totalUsers: "Total Users",
     totalCases: "Total Cases",
+    totalEmailsSent: "Emails Sent",
     thisWeek: "This Week",
     newAnalyses: "new analyses",
     warrantyCoverage: "Warranty Coverage",
@@ -366,6 +367,7 @@ export const translations = {
     additionalInfoRequired: "Additional Info Required",
     branchDistribution: "Distribution by Branch",
     warrantyDecisions: "Warranty Decisions",
+    payments: "Payments",
     
     // User Management
     userManagement: "User Management",
