@@ -638,8 +638,17 @@ export const translations = {
     siteFavicon: "Favicon",
     uploadLogo: "Upload Logo",
     uploadFavicon: "Upload Favicon",
-    logoUrl: "Logo URL",
-    faviconUrl: "Favicon URL",
+    logoUrl: "Logo URL (png, jpg, svg)",
+    faviconUrl: "Favicon URL (ico, png)",
+    
+    // Email Verification
+    verifyingEmail: "Verifying your email address...",
+    emailVerified: "Email Verified!",
+    verificationFailed: "Verification Failed",
+    emailNotVerified: "Your email is not verified yet. Please check your inbox.",
+    resendVerification: "Resend Verification Email",
+    verificationEmailSent: "Verification email sent!",
+    backToLogin: "Back to Login",
   }
 };
 
