@@ -6,8 +6,8 @@ WORKDIR /app
 # Bağımlılıkları kopyala
 COPY package.json ./
 
-# Bağımlılıkları yükle (yarn.lock oluşturulacak)
-RUN yarn install --network-timeout 100000
+# yarn.lock yoksa oluştur ve bağımlılıkları yükle
+RUN yarn install --network-timeout 300000 --frozen-lockfile || yarn install --network-timeout 300000
 
 # Kaynak kodu kopyala
 COPY . .
@@ -16,7 +16,7 @@ COPY . .
 ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
-# Production build
+# Production build (craco kullanılıyor)
 RUN yarn build
 
 # Nginx ile serve et
