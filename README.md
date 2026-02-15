@@ -1,245 +1,208 @@
-# EMERGENT AI – IZE Case Resolver
+# IZE Case Resolver
 
-## 📋 Proje Hakkında
+🚀 **Renault Trucks Yurtdışı Garanti Dosyası Analiz Sistemi**
 
-IZE Case Resolver, yurtdışı garanti dosyalarını (PDF) otomatik olarak analiz eden, garanti kapsamı değerlendirmesi yapan ve müşteri bildirimi için email taslağı oluşturan AI destekli bir sistemdir.
+IZE Case Resolver, Renault Trucks yetkili servislerinin yurtdışı garanti (IZE) taleplerini yapay zeka ile analiz eden, fatura ve ödeme yönetimi sunan full-stack bir web uygulamasıdır.
 
-## 🚀 Özellikler
+![IZE Case Resolver](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Docker](https://img.shields.io/badge/docker-ready-brightgreen)
 
-### ✅ Tamamlanan Özellikler (Faz 1)
+## 📋 Özellikler
 
-- **PDF Analizi**: IZE PDF dosyalarından otomatik metin çıkarma (PyPDF2)
-- **AI Değerlendirme**: OpenAI GPT-4o ile akıllı garanti analizi
-- **Garanti Kuralları Yönetimi**: Değerlendirme için kullanılacak kuralları ekleme/silme
-- **Geçmiş Analizler**: Tüm IZE case'lerini listeleme ve detaylı görüntüleme
-- **Yapılandırılmış Çıktı**: JSON formatında standardize edilmiş sonuçlar
+### Temel Özellikler
+- 📄 **PDF Analizi**: Text-based ve OCR destekli PDF okuma
+- 🤖 **AI Analiz**: OpenAI GPT-4o ile garanti kurallarına göre değerlendirme
+- 📧 **E-posta Bildirimi**: Otomatik analiz sonucu e-postası (PDF eki ile)
+- 🌐 **Çoklu Dil**: Türkçe ve İngilizce arayüz desteği
+- 🌙 **Tema**: Dark/Light mod desteği
 
-### 🎯 Analiz Edilen Bilgiler
+### Ödeme Sistemi
+- 💳 **Stripe**: Uluslararası kart ödemeleri
+- 🏦 **iyzico**: Türk kartları için ödeme
+- 🏧 **Havale/EFT**: Manuel onaylı banka transferi
+- 💰 **3 Para Birimi**: TL, USD, EUR desteği
 
-- ✅ 2 yıllık garanti kapsamında mı?
-- ✅ Garanti kararı (Kapsam dahili/dışı/ek bilgi gerekli)
-- ✅ Arıza nedeni ve kök sebep analizi
-- ✅ Yapılan işlemler
-- ✅ Değiştirilen parçalar
-- ✅ Tamir süreci özeti
-- ✅ Email taslağı (Kurumsal ve kibar dil)
+### Fatura Sistemi
+- 📃 **PDF Fatura**: Profesyonel tasarımlı otomatik fatura
+- 🔗 **E-Fatura Entegrasyonu**: 
+  - Paraşüt
+  - Bizimhesap
+  - Birfatura
 
-## 🛠️ Teknoloji Stack
+### Admin Panel
+- 📊 **Dashboard**: Analitik istatistikler
+- 👥 **Kullanıcı Yönetimi**: CRUD, kredi ekleme, filtreleme
+- 📁 **IZE Dosya Yönetimi**: Arşivleme, silme, filtreleme
+- ⚙️ **Ayarlar**: Site, SEO, E-posta, Ödeme, Fatura yapılandırması
+- 📜 **Garanti Kuralları**: Versiyon yönetimi, PDF yükleme
+
+## 🏗️ Teknoloji Stack
 
 ### Backend
-- **FastAPI** - Modern Python web framework
-- **MongoDB** - NoSQL veritabanı
-- **PyPDF2** - PDF metin çıkarma
-- **OpenAI GPT-4o** - AI analizi (emergentintegrations)
-- **Motor** - Async MongoDB driver
+- **Framework**: FastAPI (Python 3.11+)
+- **Database**: MongoDB
+- **AI**: OpenAI GPT-4o
+- **PDF**: pdfplumber, pytesseract (OCR)
+- **Email**: SMTP (smtplib)
 
 ### Frontend
-- **React 19** - Modern UI framework
-- **React Router** - Sayfa yönlendirme
-- **Shadcn/ui** - UI bileşenleri
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
+- **Framework**: React 18
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **i18n**: react-i18next
+- **Icons**: Lucide React
+
+### Deployment
+- **Container**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx
+- **Platform**: Coolify ready
+
+## 🚀 Kurulum
+
+### Gereksinimler
+- Docker & Docker Compose
+- MongoDB (veya Coolify içinde)
+- OpenAI API Key
+- SMTP sunucusu (e-posta için)
+
+### Hızlı Başlangıç
+
+1. **Repoyu klonlayın**
+```bash
+git clone https://github.com/yourusername/ize-case-resolver.git
+cd ize-case-resolver
+```
+
+2. **Environment dosyalarını düzenleyin**
+```bash
+# Backend
+cp backend/.env.example backend/.env
+# Frontend
+cp frontend/.env.example frontend/.env
+```
+
+3. **Backend .env düzenleme**
+```env
+MONGO_URL=mongodb://mongodb:27017
+DB_NAME=ize_resolver
+EMERGENT_LLM_KEY=your-openai-api-key
+STRIPE_API_KEY=sk_test_xxx
+IYZICO_API_KEY=sandbox-xxx
+IYZICO_SECRET_KEY=sandbox-xxx
+IYZICO_BASE_URL=sandbox-api.iyzipay.com
+```
+
+4. **Docker ile başlatın**
+```bash
+docker-compose up -d --build
+```
+
+5. **Uygulamaya erişin**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8001
+- API Docs: http://localhost:8001/docs
+
+### Coolify ile Deploy
+
+1. Coolify'da yeni bir proje oluşturun
+2. GitHub reposunu bağlayın
+3. Environment değişkenlerini ayarlayın
+4. Deploy edin
+
+Detaylı kurulum için `COOLIFY_KURULUM.md` dosyasına bakın.
 
 ## 📁 Proje Yapısı
 
 ```
-/app/
+ize-case-resolver/
 ├── backend/
-│   ├── server.py           # Ana FastAPI uygulaması
-│   ├── requirements.txt    # Python bağımlılıkları
-│   └── .env               # Ortam değişkenleri
+│   ├── models/           # Pydantic modelleri
+│   ├── routes/           # API endpoint'leri
+│   ├── services/         # İş mantığı servisleri
+│   ├── server.py         # FastAPI ana uygulama
+│   ├── database.py       # MongoDB bağlantısı
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── App.js         # Ana React uygulaması
-│   │   └── components/    # UI bileşenleri
-│   ├── package.json       # Node bağımlılıkları
-│   └── .env              # Frontend ortam değişkenleri
+│   │   ├── components/   # React bileşenleri
+│   │   ├── pages/        # Sayfa bileşenleri
+│   │   ├── locales/      # i18n çevirileri
+│   │   └── App.js        # Ana uygulama
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml
+├── COOLIFY_KURULUM.md
 └── README.md
 ```
 
-## 🔧 Kurulum ve Çalıştırma
+## 🔐 Varsayılan Hesaplar
 
-### Gereksinimler
-- Python 3.11+
-- Node.js 18+
-- MongoDB
+| Rol | Email | Şifre |
+|-----|-------|-------|
+| Admin | admin@ize.com | Admin@123! |
+| User | test@example.com | Test@123! |
 
-### Backend Kurulumu
+⚠️ **Önemli**: Production ortamında bu şifreleri mutlaka değiştirin!
+
+## 📊 API Endpoint'leri
+
+### Authentication
+- `POST /api/auth/register` - Kayıt
+- `POST /api/auth/login` - Giriş
+- `GET /api/auth/me` - Kullanıcı bilgisi
+
+### Cases
+- `POST /api/cases/analyze` - PDF yükle ve analiz et
+- `GET /api/cases` - Kullanıcının dosyaları
+- `GET /api/cases/{id}` - Dosya detayı
+
+### Payments
+- `GET /api/payments/packages/credits` - Kredi paketleri
+- `POST /api/payments/checkout/stripe` - Stripe ödeme
+- `POST /api/payments/checkout/iyzico` - iyzico ödeme
+- `POST /api/payments/checkout/bank-transfer` - Havale bildirimi
+
+### Admin
+- `GET /api/admin/analytics` - Dashboard istatistikleri
+- `GET /api/admin/users` - Kullanıcı listesi
+- `PATCH /api/admin/users/{id}/add-credit` - Kredi ekle
+
+Tüm API dokümantasyonu için: `/docs` veya `/redoc`
+
+## 🛠️ Geliştirme
+
+### Backend
 ```bash
-cd /app/backend
+cd backend
 pip install -r requirements.txt
+uvicorn server:app --reload --port 8001
 ```
 
-### Frontend Kurulumu
+### Frontend
 ```bash
-cd /app/frontend
+cd frontend
 yarn install
+yarn start
 ```
 
-### Servisleri Başlatma
-```bash
-# Tüm servisleri başlat
-sudo supervisorctl restart all
+## 📝 Lisans
 
-# Sadece backend
-sudo supervisorctl restart backend
-
-# Sadece frontend
-sudo supervisorctl restart frontend
-```
-
-### Servis Durumu Kontrolü
-```bash
-sudo supervisorctl status
-```
-
-## 🌐 API Endpoints
-
-### Garanti Kuralları
-- `POST /api/warranty-rules` - Yeni kural ekle
-- `GET /api/warranty-rules` - Tüm kuralları listele
-- `DELETE /api/warranty-rules/{rule_id}` - Kural sil
-
-### IZE Analizi
-- `POST /api/analyze` - PDF yükle ve analiz et (multipart/form-data)
-- `GET /api/cases` - Tüm case'leri listele
-- `GET /api/cases/{case_id}` - Belirli bir case'i getir
-- `DELETE /api/cases/{case_id}` - Case sil
-
-## 📊 Veri Modelleri
-
-### IZE Case Schema
-```json
-{
-  "id": "uuid",
-  "case_title": "IZE_NO - COMPANY - PLATE",
-  "ize_no": "string",
-  "company": "string",
-  "plate": "string",
-  "vin": "string",
-  "warranty_start_date": "YYYY-MM-DD",
-  "repair_date": "YYYY-MM-DD",
-  "vehicle_age_months": "number",
-  "repair_km": "number",
-  "is_within_2_year_warranty": "boolean",
-  "warranty_decision": "COVERED | OUT_OF_COVERAGE | ADDITIONAL_INFO_REQUIRED",
-  "decision_rationale": ["string"],
-  "failure_complaint": "string",
-  "failure_cause": "string",
-  "operations_performed": ["string"],
-  "parts_replaced": [{"partName": "string", "description": "string", "qty": number}],
-  "repair_process_summary": "string",
-  "email_subject": "string",
-  "email_body": "string",
-  "pdf_file_name": "string",
-  "extracted_text": "string",
-  "created_at": "datetime",
-  "binder_version_used": "string"
-}
-```
-
-### Warranty Rule Schema
-```json
-{
-  "id": "uuid",
-  "rule_version": "string",
-  "rule_text": "string",
-  "keywords": ["string"],
-  "created_at": "datetime"
-}
-```
-
-## 🔑 Ortam Değişkenleri
-
-### Backend (.env)
-```env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=test_database
-CORS_ORIGINS=*
-EMERGENT_LLM_KEY=sk-emergent-xxxxx
-```
-
-### Frontend (.env)
-```env
-REACT_APP_BACKEND_URL=https://pdf-analyzer-78.preview.emergentagent.com
-```
-
-## 💡 Kullanım Örnekleri
-
-### 1. Garanti Kuralı Ekleme (cURL)
-```bash
-curl -X POST http://localhost:8001/api/warranty-rules \
-  -H "Content-Type: application/json" \
-  -d '{
-    "rule_version": "1.0",
-    "rule_text": "2 yıl içindeki araçlar garanti kapsamındadır...",
-    "keywords": ["garanti", "2 yıl", "üretim hatası"]
-  }'
-```
-
-### 2. PDF Analizi (cURL)
-```bash
-curl -X POST http://localhost:8001/api/analyze \
-  -F "file=@/path/to/ize_file.pdf"
-```
-
-### 3. Case'leri Listeleme
-```bash
-curl http://localhost:8001/api/cases
-```
-
-## 🎨 Frontend Sayfaları
-
-1. **Ana Sayfa (/)**: PDF yükleme ve analiz başlatma
-2. **Geçmiş Analizler (/cases)**: Tüm IZE case'lerinin listesi
-3. **Case Detay (/case/:id)**: Analiz sonuçlarının detaylı görünümü
-   - Özet bilgiler
-   - Analiz detayları
-   - Email taslağı
-   - Ham veri
-4. **Garanti Kuralları (/rules)**: Kural ekleme ve yönetim
-
-## 🔮 Gelecek Özellikler (Faz 2)
-
-- [ ] Email gönderme entegrasyonu (SMTP/SendGrid)
-- [ ] Batch PDF işleme
-- [ ] Excel export
-- [ ] Kullanıcı yetkilendirme sistemi
-- [ ] Garanti Binder PDF'den otomatik kural çıkarma
-- [ ] Dashboard ve istatistikler
-- [ ] Ek dosya yükleme (fotoğraflar, job card, vb.)
-
-## 🧪 Test
-
-### Backend API Testi
-```bash
-# API health check
-curl http://localhost:8001/api/
-
-# Warranty rules test
-curl http://localhost:8001/api/warranty-rules
-```
-
-### Frontend Test
-Tarayıcınızda: `https://pdf-analyzer-78.preview.emergentagent.com`
-
-## 📝 Notlar
-
-- **PDF Format**: Sadece PDF dosyaları desteklenir
-- **AI Model**: OpenAI GPT-4o kullanılmaktadır
-- **Dil**: Tüm analiz ve email çıktıları Türkçe'dir
-- **Email**: Şu anda sadece taslak oluşturulmaktadır (gönderim Faz 2'de)
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakın.
 
 ## 🤝 Katkıda Bulunma
 
-Bu proje Emergent AI tarafından geliştirilmiştir.
+1. Fork edin
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Commit edin (`git commit -m 'Add amazing feature'`)
+4. Push edin (`git push origin feature/amazing-feature`)
+5. Pull Request açın
 
-## 📄 Lisans
+## 📞 Destek
 
-Özel proje - Tüm hakları saklıdır.
+Sorularınız için issue açabilir veya iletişime geçebilirsiniz.
 
 ---
 
-**Geliştirici**: Emergent AI  
-**Versiyon**: 1.0.0  
-**Son Güncelleme**: Şubat 2026
+**IZE Case Resolver** - Renault Trucks Yetkili Servisleri için geliştirilmiştir.
