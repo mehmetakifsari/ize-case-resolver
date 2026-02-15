@@ -2384,6 +2384,32 @@ const AdminSiteSettings = () => {
               <div><Label>{t("companyName")}</Label><Input value={settings?.company_name || ""} onChange={(e) => handleChange("company_name", e.target.value)} placeholder="Şirket Adı" /></div>
               <div><Label>{t("contactEmail")}</Label><Input type="email" value={settings?.contact_email || ""} onChange={(e) => handleChange("contact_email", e.target.value)} placeholder="info@example.com" /></div>
               <div><Label>{t("contactPhone")}</Label><Input value={settings?.contact_phone || ""} onChange={(e) => handleChange("contact_phone", e.target.value)} placeholder="+90 XXX XXX XX XX" /></div>
+              
+              {/* Banka Bilgileri */}
+              <Separator className="my-6" />
+              <h3 className="font-semibold text-lg flex items-center gap-2"><Banknote className="w-5 h-5" />{t("bankInfo")}</h3>
+              <p className="text-sm text-gray-500">{t("bankInfoDesc")}</p>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>{t("bankName")}</Label>
+                  <Input value={settings?.bank_name || ""} onChange={(e) => handleChange("bank_name", e.target.value)} placeholder="Türkiye İş Bankası" />
+                </div>
+                <div>
+                  <Label>{t("bankAccountHolder")}</Label>
+                  <Input value={settings?.bank_account_holder || ""} onChange={(e) => handleChange("bank_account_holder", e.target.value)} placeholder="Şirket Adı Ltd. Şti." />
+                </div>
+              </div>
+              <div>
+                <Label>{t("bankIban")}</Label>
+                <Input value={settings?.bank_iban || ""} onChange={(e) => handleChange("bank_iban", e.target.value)} placeholder="TR00 0000 0000 0000 0000 0000 00" className="font-mono" />
+                <p className="text-xs text-gray-500 mt-1">{t("ibanHelp")}</p>
+              </div>
+              <div>
+                <Label>{t("bankSwift")}</Label>
+                <Input value={settings?.bank_swift || ""} onChange={(e) => handleChange("bank_swift", e.target.value)} placeholder="ISBKTRIS" />
+                <p className="text-xs text-gray-500 mt-1">{t("swiftHelp")}</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
