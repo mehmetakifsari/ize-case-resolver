@@ -371,6 +371,9 @@ export const translations = {
     branchDistribution: "Distribution by Branch",
     warrantyDecisions: "Warranty Decisions",
     payments: "Payments",
+    paymentSettings: "Payment Settings",
+    invoiceSettings: "Invoice Settings",
+    socialMedia: "Social Media",
     
     // User Management
     userManagement: "User Management",
