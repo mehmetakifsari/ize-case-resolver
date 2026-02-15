@@ -865,8 +865,11 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
+    { path: "/user/upload", icon: Upload, label: t("izeAnalysis") },
     { path: "/admin/users", icon: Users, label: t("users") },
     { path: "/admin/cases", icon: List, label: t("allCases") },
+    { path: "/admin/branches", icon: MapPin, label: t("branchManagement") },
+    { path: "/admin/pricing", icon: DollarSign, label: t("pricingManagement") },
     { path: "/admin/payments", icon: Banknote, label: t("payments") },
     { path: "/admin/payment-settings", icon: CreditCard, label: t("paymentSettings") },
     { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
