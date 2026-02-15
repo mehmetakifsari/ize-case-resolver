@@ -2054,6 +2054,41 @@ const CaseDetail = () => {
   );
 };
 
+// ==================== PAYMENT WRAPPERS ====================
+
+const PaymentPageWrapper = () => {
+  const { user, token } = useAuth();
+  const { language, t } = useLanguage();
+  return <PaymentPage user={user} token={token} t={t} language={language} />;
+};
+
+const PaymentSuccessWrapper = () => {
+  const { token } = useAuth();
+  const { language, t } = useLanguage();
+  return <PaymentSuccessPage token={token} t={t} language={language} />;
+};
+
+const PaymentPendingWrapper = () => {
+  const { token } = useAuth();
+  const { language } = useLanguage();
+  return <PaymentPendingPage token={token} language={language} />;
+};
+
+const PaymentCancelWrapper = () => {
+  const { language } = useLanguage();
+  return <PaymentCancelPage language={language} />;
+};
+
+const AdminPaymentsWrapper = () => {
+  const { token } = useAuth();
+  const { language, t } = useLanguage();
+  return (
+    <Layout>
+      <AdminPayments token={token} language={language} />
+    </Layout>
+  );
+};
+
 // ==================== MAIN APP ====================
 
 function App() {
