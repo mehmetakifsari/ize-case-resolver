@@ -22,21 +22,23 @@ async def analyze_ize_pdf(
 ):
     """IZE PDF dosyasını analiz eder (Authentication gerekli)"""
     
-    # Kredi kontrolü (Admin sınırsız)
-    if current_user['role'] != 'admin':
+    # Kredi kontrolü (Admin ve sınırsız kredi olanlar muaf)
+    has_unlimited = current_user.get('has_unlimited_credits', False)
+    is_admin = current_user['role'] == 'admin'
+    
+    if not is_admin and not has_unlimited:
         if current_user.get('free_analyses_remaining', 0) <= 0:
             raise HTTPException(
                 status_code=403, 
-                detail="Ücretsiz analiz hakkınız bitti. Lütfen yönetici ile iletişime geçin."
+                detail="Analiz krediniz bitti. Lütfen kredi satın alın veya yönetici ile iletişime geçin."
             )
     
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Sadece PDF dosyası yükleyebilirsiniz")
     
-    # Şube kontrolü
+    # Şube kontrolü - veritabanından şubeleri al
     user_branch = branch or current_user.get('branch', '')
-    if user_branch and user_branch not in BRANCHES:
-        raise HTTPException(status_code=400, detail=f"Geçersiz şube. Şubeler: {', '.join(BRANCHES)}")
+    # Şube validasyonunu kaldırdık - dinamik şubeler kullanılıyor
     
     # PDF'i oku
     pdf_content = await file.read()
