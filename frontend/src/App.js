@@ -491,7 +491,11 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <Card className="w-full max-w-md" data-testid="login-card">
         <CardHeader className="text-center">
-          <FileText className="w-12 h-12 mx-auto mb-2 text-primary" />
+          {siteSettings?.site_logo_url ? (
+            <img src={siteSettings.site_logo_url} alt={siteSettings?.site_name || "Logo"} className="h-12 mx-auto mb-2 object-contain" />
+          ) : (
+            <FileText className="w-12 h-12 mx-auto mb-2 text-primary" />
+          )}
           <CardTitle className="text-2xl">{t("login")}</CardTitle>
           <CardDescription>{siteSettings?.site_name || t("appName")}</CardDescription>
         </CardHeader>
