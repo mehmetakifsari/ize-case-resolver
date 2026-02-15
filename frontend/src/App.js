@@ -2560,6 +2560,102 @@ const PaymentCancelWrapper = () => {
   return <PaymentCancelPage language={language} />;
 };
 
+// ==================== EMAIL VERIFICATION PAGE ====================
+
+const EmailVerificationPage = () => {
+  const [status, setStatus] = useState("verifying"); // verifying, success, error
+  const [message, setMessage] = useState("");
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { token: verificationToken } = useParams();
+
+  useEffect(() => {
+    verifyEmail();
+  }, [verificationToken]);
+
+  const verifyEmail = async () => {
+    try {
+      const response = await axios.get(`${API}/auth/verify-email/${verificationToken}`);
+      setStatus("success");
+      setMessage(response.data.message);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6 text-center">
+          {status === "verifying" && (
+            <>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>{t("verifyingEmail")}</p>
+            </>
+          )}
+          {status === "success" && (
+            <>
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">{t("emailVerified")}</h2>
+              <p className="text-gray-500 mb-6">{message}</p>
+              <Button onClick={() => navigate("/login")} className="w-full">{t("login")}</Button>
+            </>
+          )}
+          {status === "error" && (
+            <>
+              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">{t("verificationFailed")}</h2>
+              <p className="text-gray-500 mb-6">{message}</p>
+              <Button variant="outline" onClick={() => navigate("/login")} className="w-full">{t("backToLogin")}</Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Email Verification Banner Component
+const EmailVerificationBanner = () => {
+  const { user, token } = useAuth();
+  const { t } = useLanguage();
+  const [resending, setResending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  if (!user || user.is_email_verified !== false) return null;
+
+  const resendVerification = async () => {
+    setResending(true);
+    try {
+      await axios.post(`${API}/auth/resend-verification`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setSent(true);
+    } catch (error) {
+      alert(error.response?.data?.detail || t("error"));
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <div className="bg-yellow-100 dark:bg-yellow-900/30 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <span className="text-sm text-yellow-800 dark:text-yellow-200">{t("emailNotVerified")}</span>
+        </div>
+        {sent ? (
+          <span className="text-sm text-green-600">{t("verificationEmailSent")}</span>
+        ) : (
+          <Button size="sm" variant="outline" onClick={resendVerification} disabled={resending}>
+            {resending ? t("loading") : t("resendVerification")}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminPaymentsWrapper = () => {
   const { token } = useAuth();
   const { language, t } = useLanguage();
