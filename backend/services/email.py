@@ -312,3 +312,78 @@ async def test_smtp_connection() -> dict:
         return {"success": False, "message": f"SMTP hatası: {str(e)}"}
     except Exception as e:
         return {"success": False, "message": f"Bağlantı hatası: {str(e)}"}
+
+
+
+async def send_verification_email(to_email: str, full_name: str, verification_token: str) -> dict:
+    """E-posta doğrulama linki gönder"""
+    
+    settings = await get_email_settings()
+    
+    if not settings.get("email_enabled", True):
+        return {"success": False, "message": "E-posta gönderimi devre dışı"}
+    
+    if not settings.get("smtp_password"):
+        return {"success": False, "message": "SMTP şifresi ayarlanmamış"}
+    
+    # Site ayarlarından domain al
+    site_settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    base_url = "https://ize.visupanel.com"  # Varsayılan
+    if site_settings and site_settings.get("canonical_url"):
+        base_url = site_settings["canonical_url"].rstrip("/")
+    
+    verification_link = f"{base_url}/verify-email/{verification_token}"
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"{settings.get('sender_name', 'IZE Case Resolver')} <{settings.get('sender_email', 'info@visupanel.com')}>"
+        msg['To'] = to_email
+        msg['Subject'] = "E-posta Adresinizi Doğrulayın - IZE Case Resolver"
+        
+        body = f"""Sayın {full_name},
+
+IZE Case Resolver'a hoş geldiniz!
+
+Hesabınızı aktif hale getirmek için aşağıdaki linke tıklayarak e-posta adresinizi doğrulayın:
+
+{verification_link}
+
+Bu link 24 saat geçerlidir.
+
+Eğer bu hesabı siz oluşturmadıysanız, bu e-postayı görmezden gelebilirsiniz.
+
+---
+IZE Case Resolver
+Renault Trucks Yetkili Servisleri için Garanti Analiz Sistemi
+"""
+        
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        
+        # SMTP bağlantısı ve gönderim
+        smtp_host = settings.get('smtp_host', 'smtp.visupanel.com')
+        smtp_port = settings.get('smtp_port', 587)
+        smtp_user = settings.get('smtp_user', 'info@visupanel.com')
+        smtp_password = settings.get('smtp_password', '')
+        
+        # TLS ile bağlan
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(
+                settings.get('sender_email', smtp_user),
+                to_email,
+                msg.as_string()
+            )
+        
+        logger.info(f"Doğrulama e-postası gönderildi: {to_email}")
+        return {"success": True, "message": "Doğrulama e-postası gönderildi"}
+        
+    except Exception as e:
+        logger.error(f"Doğrulama e-postası gönderim hatası: {str(e)}")
+        return {"success": False, "message": f"E-posta gönderilemedi: {str(e)}"}
