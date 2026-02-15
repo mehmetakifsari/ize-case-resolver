@@ -96,6 +96,9 @@ export const translations = {
     branchDistribution: "Şubelere Göre Dağılım",
     warrantyDecisions: "Garanti Kararları",
     payments: "Ödemeler",
+    paymentSettings: "Ödeme Ayarları",
+    invoiceSettings: "Fatura Ayarları",
+    socialMedia: "Sosyal Medya",
     
     // User Management
     userManagement: "Kullanıcı Yönetimi",
