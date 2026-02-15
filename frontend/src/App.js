@@ -1755,7 +1755,7 @@ const AdminSiteSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { token } = useAuth();
-  const { t, fetchSiteSettings: refreshSiteSettings } = useLanguage();
+  const { t, language, fetchSiteSettings: refreshSiteSettings } = useLanguage();
 
   useEffect(() => { fetchSettings(); }, []);
 
