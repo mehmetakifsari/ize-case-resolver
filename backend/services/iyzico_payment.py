@@ -103,11 +103,11 @@ class IyzicoPaymentService:
                 },
                 'basketItems': [
                     {
-                        'id': item.get('id', str(i)),
-                        'name': item.get('name', 'Product'),
-                        'category1': item.get('category1', 'Digital'),
-                        'category2': item.get('category2', 'Service'),
-                        'itemType': item.get('item_type', 'VIRTUAL'),
+                        'id': str(item.get('id', i)),
+                        'name': str(item.get('name', 'Product')),
+                        'category1': str(item.get('category1', 'Digital')),
+                        'category2': str(item.get('category2', 'Service')),
+                        'itemType': str(item.get('item_type', 'VIRTUAL')),
                         'price': str(item.get('price', price))
                     } for i, item in enumerate(basket_items)
                 ]
