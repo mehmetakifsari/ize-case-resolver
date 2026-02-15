@@ -368,9 +368,7 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - **Sender:** IZE Case Resolver
 
 ## Upcoming Tasks (P1)
-- [ ] Site Logo ve Favicon yükleme özelliği
-- [ ] E-posta doğrulama sistemi
-- [ ] Kredi satın alma akışı (ödeme sistemine yönlendirme)
+- [ ] E-posta doğrulama ZORUNLU yapma (opsiyonel ayarı)
 - [ ] iyzico production API keys integration
 - [ ] Paraşüt/Bizimhesap/Birfatura production API keys
 
