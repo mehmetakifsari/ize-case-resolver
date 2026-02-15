@@ -2149,6 +2149,7 @@ const AdminSiteSettings = () => {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState({ logo: false, favicon: false });
   const { token } = useAuth();
   const { t, language, fetchSiteSettings: refreshSiteSettings } = useLanguage();
 
@@ -2162,6 +2163,49 @@ const AdminSiteSettings = () => {
 
   const handleChange = (field, value) => {
     setSettings({ ...settings, [field]: value });
+  };
+
+  const handleImageUpload = async (file, imageType) => {
+    if (!file) return;
+    
+    // Dosya tipi kontrolü
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/ico', 'image/svg+xml', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.ico')) {
+      alert(t("invalidFileType") || "Geçersiz dosya tipi. PNG, JPG, GIF, SVG, ICO veya WEBP yükleyin.");
+      return;
+    }
+    
+    // Dosya boyutu kontrolü (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert(t("fileTooLarge") || "Dosya çok büyük. Maksimum 5MB.");
+      return;
+    }
+    
+    setUploading({ ...uploading, [imageType]: true });
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('image_type', imageType);
+      
+      const response = await axios.post(`${API}/admin/upload-image?image_type=${imageType}`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // URL'yi ayarlara kaydet
+      const field = imageType === 'logo' ? 'site_logo_url' : 'favicon_url';
+      handleChange(field, response.data.url);
+      
+      alert(t("uploadSuccess") || "Dosya başarıyla yüklendi!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert(t("uploadError") || "Dosya yüklenirken hata oluştu: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading({ ...uploading, [imageType]: false });
+    }
   };
 
   const saveSettings = async () => {
