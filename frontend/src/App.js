@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import translations from "./translations";
 import { PaymentPage, PaymentSuccessPage, PaymentPendingPage, PaymentCancelPage } from "./pages/PaymentPage";
 import { AdminPayments } from "./pages/Admin/AdminPayments";
+import { PaymentSettings } from "./pages/Admin/PaymentSettings";
 import "@/App.css";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
