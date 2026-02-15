@@ -1045,10 +1045,16 @@ const AdminUsers = () => {
   const addCredit = async (userId) => { await axios.patch(`${API}/admin/users/${userId}/add-credit?amount=5`, {}, { headers: { Authorization: `Bearer ${token}` } }); fetchUsers(); };
   const deleteUser = async (userId) => { if (!window.confirm(t("deleteUserConfirm"))) return; await axios.delete(`${API}/admin/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } }); fetchUsers(); };
 
+  // Toplam e-posta sayısı
+  const totalEmails = users.reduce((sum, user) => sum + (user.emails_sent || 0), 0);
+
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-users-title">{t("userManagement")}</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-users-title">{t("userManagement")}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t("totalEmailsSent")}: <span className="font-semibold text-primary">{totalEmails}</span></p>
+        </div>
         <div className="flex gap-2">
           <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("allBranches")} /></SelectTrigger>
@@ -1070,7 +1076,12 @@ const AdminUsers = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2"><span className="font-medium">{user.full_name}</span><Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge><Badge variant={user.is_active ? "default" : "destructive"}>{user.is_active ? t("active") : t("inactive")}</Badge></div>
                     <p className="text-sm text-gray-500">{user.email}</p>
-                    <div className="flex gap-4 text-xs text-gray-500">{user.phone_number && <span><Phone className="w-3 h-3 inline mr-1" />{user.phone_number}</span>}{user.branch && <span><Building className="w-3 h-3 inline mr-1" />{user.branch}</span>}<span><CreditCard className="w-3 h-3 inline mr-1" />{t("credit")}: {user.free_analyses_remaining}</span></div>
+                    <div className="flex gap-4 text-xs text-gray-500 flex-wrap">
+                      {user.phone_number && <span><Phone className="w-3 h-3 inline mr-1" />{user.phone_number}</span>}
+                      {user.branch && <span><Building className="w-3 h-3 inline mr-1" />{user.branch}</span>}
+                      <span><CreditCard className="w-3 h-3 inline mr-1" />{t("credit")}: {user.free_analyses_remaining}</span>
+                      <span><Mail className="w-3 h-3 inline mr-1" />{t("emailsSent")}: <span className="font-medium text-primary">{user.emails_sent || 0}</span></span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => addCredit(user.id)}><Plus className="w-4 h-4 mr-1" />5 {t("credit")}</Button>
