@@ -312,8 +312,17 @@ export const translations = {
     siteFavicon: "Favicon",
     uploadLogo: "Logo Yükle",
     uploadFavicon: "Favicon Yükle",
-    logoUrl: "Logo URL",
-    faviconUrl: "Favicon URL",
+    logoUrl: "Logo URL (png, jpg, svg)",
+    faviconUrl: "Favicon URL (ico, png)",
+    
+    // Email Verification
+    verifyingEmail: "E-posta adresiniz doğrulanıyor...",
+    emailVerified: "E-posta Doğrulandı!",
+    verificationFailed: "Doğrulama Başarısız",
+    emailNotVerified: "E-posta adresiniz henüz doğrulanmadı. Lütfen e-postanızı kontrol edin.",
+    resendVerification: "Doğrulama E-postası Gönder",
+    verificationEmailSent: "Doğrulama e-postası gönderildi!",
+    backToLogin: "Giriş Sayfasına Dön",
   },
   
   en: {
