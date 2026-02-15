@@ -1,6 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List, Optional
 from datetime import datetime, timezone
+import os
+import uuid
+import shutil
+from pathlib import Path
 from models.user import (
     User, UserInDB, UserCreate, UserUpdate, DEFAULT_BRANCHES,
     Branch, BranchCreate, PricingPlan, PricingPlanCreate, PricingPlanUpdate
@@ -10,6 +14,10 @@ from services.auth import get_password_hash
 from services.email import test_smtp_connection
 from routes.auth import get_admin_user
 from database import db
+
+# Upload dizini - frontend/public/uploads
+UPLOAD_DIR = Path(__file__).parent.parent.parent / "frontend" / "public" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
