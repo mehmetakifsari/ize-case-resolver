@@ -213,3 +213,35 @@ async def generate_invoice_for_transaction(
     )
     
     return {"message": "Fatura oluşturuldu", "invoice_number": invoice.invoice_number}
+
+
+# ==================== PUBLIC ENDPOINTS (Auth Gerektirmez) ====================
+
+@router.get("/public/pricing-plans")
+async def get_public_pricing_plans():
+    """Fiyatlandırma planlarını getir (Public - herkes erişebilir)"""
+    plans = await db.pricing_plans.find({"is_active": True}, {"_id": 0}).sort("price", 1).to_list(100)
+    
+    # Varsayılan planları döndür
+    if not plans:
+        return [
+            {"id": "free", "name": "Ücretsiz", "credits": 5, "price": 0, "currency": "TRY", "is_popular": False, "features": ["5 Ücretsiz Analiz", "E-posta Desteği"], "plan_type": "package"},
+            {"id": "starter", "name": "Başlangıç", "credits": 10, "price": 100, "currency": "TRY", "is_popular": False, "features": ["10 IZE Analizi", "E-posta Desteği"], "plan_type": "package"},
+            {"id": "pro", "name": "Pro", "credits": 50, "price": 400, "currency": "TRY", "is_popular": True, "features": ["50 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"], "plan_type": "package"},
+            {"id": "enterprise", "name": "Enterprise", "credits": 200, "price": 1200, "currency": "TRY", "is_popular": False, "features": ["200 IZE Analizi", "7/24 Destek", "Özel Entegrasyon", "API Erişimi"], "plan_type": "package"},
+        ]
+    
+    return plans
+
+
+@router.get("/public/branches")
+async def get_public_branches():
+    """Aktif şubeleri getir (Public - kayıt için)"""
+    branches = await db.branches.find({"is_active": True}, {"_id": 0, "name": 1}).sort("name", 1).to_list(100)
+    
+    if not branches:
+        from models.user import DEFAULT_BRANCHES
+        return [{"name": name} for name in DEFAULT_BRANCHES]
+    
+    return branches
+
