@@ -1792,11 +1792,12 @@ const AdminSiteSettings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">{t("generalSettings")}</TabsTrigger>
           <TabsTrigger value="seo">{t("seoSettings")}</TabsTrigger>
           <TabsTrigger value="analytics">{t("analyticsSettings")}</TabsTrigger>
           <TabsTrigger value="contact">{t("contactSettings")}</TabsTrigger>
+          <TabsTrigger value="social">{t("socialMedia")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
