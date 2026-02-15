@@ -373,11 +373,13 @@ export const translations = {
     admin: "Admin",
     user: "User",
     addCredit: "Add Credit",
+    emailsSent: "Emails",
     makeInactive: "Make Inactive",
     makeActive: "Make Active",
     credit: "Credit",
     deleteUserConfirm: "Are you sure you want to delete this user?",
     userNotFound: "User not found",
+    totalEmailsSent: "Emails Sent",
     
     // Cases
     allIzeCases: "All IZE Cases",
