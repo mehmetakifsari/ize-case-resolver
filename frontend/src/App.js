@@ -2059,6 +2059,7 @@ function App() {
               <Route path="/admin/cases" element={<PrivateRoute adminOnly><AdminAllCases /></PrivateRoute>} />
               <Route path="/admin/rules" element={<PrivateRoute adminOnly><AdminRules /></PrivateRoute>} />
               <Route path="/admin/api-settings" element={<PrivateRoute adminOnly><AdminAPISettings /></PrivateRoute>} />
+              <Route path="/admin/email-settings" element={<PrivateRoute adminOnly><AdminEmailSettings /></PrivateRoute>} />
               <Route path="/admin/site-settings" element={<PrivateRoute adminOnly><AdminSiteSettings /></PrivateRoute>} />
               <Route path="/user/upload" element={<PrivateRoute><UserUpload /></PrivateRoute>} />
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
