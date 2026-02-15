@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from models.user import User, UserInDB, UserCreate, UserLogin, Token
 from services.auth import verify_password, get_password_hash, create_access_token, decode_access_token
+from services.email import send_verification_email
 from database import db
+import uuid
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
