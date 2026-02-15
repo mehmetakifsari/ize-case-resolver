@@ -123,6 +123,22 @@ async def analyze_ize_pdf(
         )
         logger.info(f"Kullanıcı kredisi güncellendi: {current_user['email']}")
     
+    # E-posta gönder (arka planda)
+    try:
+        email_result = await send_analysis_email(
+            to_email=current_user['email'],
+            case_data=analysis_result,
+            attachment_bytes=pdf_content,
+            attachment_filename=file.filename,
+            language="tr"
+        )
+        if email_result.get("success"):
+            logger.info(f"E-posta gönderildi: {current_user['email']}")
+        else:
+            logger.warning(f"E-posta gönderilemedi: {email_result.get('message')}")
+    except Exception as e:
+        logger.warning(f"E-posta gönderim hatası: {str(e)}")
+    
     return ize_case
 
 
