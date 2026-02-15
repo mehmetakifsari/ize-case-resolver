@@ -1892,7 +1892,6 @@ const AdminSiteSettings = () => {
 
 const UserUpload = () => {
   const [file, setFile] = useState(null);
-  const [branch, setBranch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const { token, user, fetchUser } = useAuth();
@@ -1906,7 +1905,7 @@ const UserUpload = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      if (branch) formData.append("branch", branch);
+      // Kullanıcının kayıt sırasında seçtiği şube otomatik kullanılıyor (backend'de)
       const response = await axios.post(`${API}/cases/analyze`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
       fetchUser();
       navigate(`/case/${response.data.id}`);
@@ -1922,6 +1921,12 @@ const UserUpload = () => {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" data-testid="user-upload-title">{t("uploadTitle")}</h1>
         {user?.free_analyses_remaining <= 0 && (<Alert variant="destructive" className="mb-6"><AlertCircle className="h-4 w-4" /><AlertDescription>{t("noCredits")}</AlertDescription></Alert>)}
+        {user?.branch && (
+          <Alert className="mb-6">
+            <Building className="h-4 w-4" />
+            <AlertDescription>{t("branch")}: <strong>{user.branch}</strong></AlertDescription>
+          </Alert>
+        )}
         <Card><CardContent className="p-6">
           <form onSubmit={handleUpload} className="space-y-6">
             <div>
@@ -1933,13 +1938,6 @@ const UserUpload = () => {
                   {file ? <p className="text-primary font-medium">{file.name}</p> : (<><p className="text-gray-600">{t("selectFile")}</p><p className="text-sm text-gray-400 mt-1">{t("maxFileSize")}</p></>)}
                 </label>
               </div>
-            </div>
-            <div>
-              <Label>{t("branch")}</Label>
-              <Select value={branch} onValueChange={setBranch}>
-                <SelectTrigger data-testid="upload-branch"><SelectValue placeholder={t("branch")} /></SelectTrigger>
-                <SelectContent>{BRANCHES.map(b => (<SelectItem key={b} value={b}>{b}</SelectItem>))}</SelectContent>
-              </Select>
             </div>
             {error && (<Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>)}
             <Button type="submit" className="w-full" disabled={!file || uploading || user?.free_analyses_remaining <= 0} data-testid="upload-submit">
