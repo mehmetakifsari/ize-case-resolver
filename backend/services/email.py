@@ -250,8 +250,10 @@ async def send_analysis_email(
         smtp_user = settings.get('smtp_user', 'info@visupanel.com')
         smtp_password = settings.get('smtp_password', '')
         
-        # TLS ile bağlan
+        # TLS ile bağlan - SSL sertifika doğrulamasını gevşet
         context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
         
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.ehlo()
