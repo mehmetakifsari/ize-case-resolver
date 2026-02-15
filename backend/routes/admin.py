@@ -583,3 +583,77 @@ async def set_user_credits(user_id: str, amount: int, admin: dict = Depends(get_
     await db.users.update_one({"id": user_id}, {"$set": {"free_analyses_remaining": amount}})
     
     return {"message": f"Kredi {amount} olarak ayarlandı", "credits": amount}
+
+
+# ==================== IMAGE UPLOAD ====================
+
+ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+@router.post("/upload-image")
+async def upload_image(
+    file: UploadFile = File(...),
+    image_type: str = "logo",
+    admin: dict = Depends(get_admin_user)
+):
+    """Logo veya favicon yükle (Sadece admin)"""
+    # Dosya uzantısını kontrol et
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Geçersiz dosya tipi. İzin verilen: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+        )
+    
+    # Dosya boyutunu kontrol et
+    file.file.seek(0, 2)  # Dosya sonuna git
+    file_size = file.file.tell()
+    file.file.seek(0)  # Başa dön
+    
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dosya boyutu çok büyük. Maksimum: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+    
+    # Benzersiz dosya adı oluştur
+    unique_filename = f"{image_type}_{uuid.uuid4().hex[:8]}{file_ext}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Dosyayı kaydet
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
+    
+    # Public URL oluştur
+    public_url = f"/uploads/{unique_filename}"
+    
+    return {
+        "message": "Dosya başarıyla yüklendi",
+        "filename": unique_filename,
+        "url": public_url,
+        "image_type": image_type
+    }
+
+
+@router.delete("/delete-image/{filename}")
+async def delete_image(filename: str, admin: dict = Depends(get_admin_user)):
+    """Yüklenen görsel dosyasını sil (Sadece admin)"""
+    file_path = UPLOAD_DIR / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Dosya bulunamadı")
+    
+    # Güvenlik: sadece uploads dizinindeki dosyaları sil
+    try:
+        file_path = file_path.resolve()
+        upload_dir = UPLOAD_DIR.resolve()
+        if not str(file_path).startswith(str(upload_dir)):
+            raise HTTPException(status_code=403, detail="Bu dosyaya erişim izni yok")
+        
+        os.remove(file_path)
+        return {"message": "Dosya silindi", "filename": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dosya silinemedi: {str(e)}")
