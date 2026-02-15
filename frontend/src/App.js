@@ -2129,6 +2129,16 @@ const AdminPaymentsWrapper = () => {
   );
 };
 
+const PaymentSettingsWrapper = () => {
+  const { token } = useAuth();
+  const { language } = useLanguage();
+  return (
+    <AdminLayout>
+      <PaymentSettings token={token} language={language} />
+    </AdminLayout>
+  );
+};
+
 // ==================== MAIN APP ====================
 
 function App() {
