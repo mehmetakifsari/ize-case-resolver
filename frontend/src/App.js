@@ -966,7 +966,11 @@ const AdminLayout = ({ children }) => {
           <div className="p-4 border-b flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center gap-2">
-                <FileText className="w-8 h-8 text-primary" />
+                {siteSettings?.site_logo_url ? (
+                  <img src={siteSettings.site_logo_url} alt="Logo" className="h-8 object-contain" />
+                ) : (
+                  <FileText className="w-8 h-8 text-primary" />
+                )}
                 <span className="font-bold">{t("adminPanel")}</span>
               </div>
             )}
