@@ -21,6 +21,7 @@ class User(BaseModel):
     is_active: bool = True
     free_analyses_remaining: int = 5
     total_analyses: int = 0
+    emails_sent: int = 0  # Gönderilen e-posta sayısı
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
