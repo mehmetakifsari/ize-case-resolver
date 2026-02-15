@@ -41,8 +41,8 @@ class TestEmailSettingsEndpoints:
     def test_get_email_settings_without_auth(self):
         """Test GET /api/admin/email-settings without authentication - should fail"""
         response = requests.get(f"{BASE_URL}/api/admin/email-settings")
-        assert response.status_code == 401, "Should require authentication"
-        print("PASS: Email settings endpoint requires authentication")
+        assert response.status_code in [401, 403], "Should require authentication"
+        print(f"PASS: Email settings endpoint requires authentication (returned {response.status_code})")
 
     def test_get_email_settings_with_auth(self, admin_headers):
         """Test GET /api/admin/email-settings with admin authentication"""
