@@ -1,11 +1,12 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
 import re
 
-# Şube listesi
-BRANCHES = ["Bursa", "İzmit", "Orhanlı", "Hadımköy", "Keşan"]
+# Varsayılan şube listesi (dinamik olarak DB'den de alınabilir)
+DEFAULT_BRANCHES = ["Bursa", "İzmit", "Orhanlı", "Hadımköy", "Keşan"]
+BRANCHES = DEFAULT_BRANCHES  # Geriye uyumluluk için
 
 
 class User(BaseModel):
@@ -16,10 +17,12 @@ class User(BaseModel):
     email: EmailStr
     full_name: str
     phone_number: str = ""
-    branch: str = ""  # Şube: Bursa, İzmit, Orhanlı, Hadımköy, Keşan
+    branch: str = ""  # Şube
     role: str = "user"  # admin veya user
     is_active: bool = True
+    is_email_verified: bool = False  # E-posta doğrulama durumu
     free_analyses_remaining: int = 5
+    has_unlimited_credits: bool = False  # Sınırsız kredi
     total_analyses: int = 0
     emails_sent: int = 0  # Gönderilen e-posta sayısı
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
