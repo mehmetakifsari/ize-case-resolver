@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Dict, List, Any
 from fastapi import HTTPException
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +20,19 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
         
         # API Key öncelik sırası: 
         # 1. Panel'deki OpenAI key
-        # 2. Panel'deki Emergent key
-        # 3. Environment'taki OPENAI_API_KEY
-        # 4. Environment'taki EMERGENT_LLM_KEY
+        # 2. Environment'taki OPENAI_API_KEY
         api_key = None
         if db_settings:
-            api_key = db_settings.get('openai_key') or db_settings.get('emergent_key')
+            api_key = db_settings.get('openai_key')
         if not api_key:
-            api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY', '')
+            api_key = os.environ.get('OPENAI_API_KEY', '')
         
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=str(uuid.uuid4()),
-            system_message="""Sen Renault Trucks için yurtdışı garanti IZE dosyalarını analiz eden uzman bir sistemsin.
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OpenAI API anahtarı bulunamadı")
+        
+        client = AsyncOpenAI(api_key=api_key)
+        
+        system_message = """Sen Renault Trucks için yurtdışı garanti IZE dosyalarını analiz eden uzman bir sistemsin.
             
 GÖREVİN: PDF'deki tüm teknik detayları dikkatle okuyup yapılandırılmış JSON formatında çıkartmak.
 
@@ -82,7 +82,6 @@ GÖREVİN: PDF'deki tüm teknik detayları dikkatle okuyup yapılandırılmış 
 }
 
 SADECE JSON ÇIKTISI VER, BAŞKA AÇIKLAMA EKLEME!"""
-        ).with_model("openai", "gpt-4o")
         
         # Analiz mesajı oluştur
         prompt = f"""
@@ -113,11 +112,19 @@ IZE DOSYASI ANALİZ TALEBİ
 SADECE JSON formatında çıktı ver. Başka hiçbir metin ekleme!
 """
         
-        user_message = UserMessage(text=prompt)
-        response = await chat.send_message(user_message)
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=4000
+        )
+        
+        response_text = response.choices[0].message.content.strip()
         
         # JSON parse et
-        response_text = response.strip()
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.startswith("```"):
@@ -128,6 +135,9 @@ SADECE JSON formatında çıktı ver. Başka hiçbir metin ekleme!
         analysis_result = json.loads(response_text.strip())
         return analysis_result
         
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parse hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI yanıtı işlenemedi: {str(e)}")
     except Exception as e:
         logger.error(f"AI analiz hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analiz hatası: {str(e)}")
