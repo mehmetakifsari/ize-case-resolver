@@ -430,3 +430,148 @@ async def test_email_connection(admin: dict = Depends(get_admin_user)):
     """SMTP bağlantısını test et (Sadece admin)"""
     result = await test_smtp_connection()
     return result
+
+
+
+# ==================== BRANCH MANAGEMENT ====================
+
+@router.get("/branches")
+async def get_branches(admin: dict = Depends(get_admin_user)):
+    """Tüm şubeleri listele"""
+    branches = await db.branches.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    
+    # Eğer veritabanında şube yoksa, varsayılanları ekle
+    if not branches:
+        for name in DEFAULT_BRANCHES:
+            branch = Branch(name=name)
+            branch_dict = branch.model_dump()
+            branch_dict['created_at'] = branch_dict['created_at'].isoformat()
+            await db.branches.insert_one(branch_dict)
+        branches = await db.branches.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    
+    return branches
+
+
+@router.post("/branches")
+async def create_branch(branch_data: BranchCreate, admin: dict = Depends(get_admin_user)):
+    """Yeni şube ekle"""
+    existing = await db.branches.find_one({"name": branch_data.name})
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu şube zaten mevcut")
+    
+    branch = Branch(name=branch_data.name)
+    branch_dict = branch.model_dump()
+    branch_dict['created_at'] = branch_dict['created_at'].isoformat()
+    
+    await db.branches.insert_one(branch_dict)
+    
+    return {"message": "Şube eklendi", "branch": branch_dict}
+
+
+@router.delete("/branches/{branch_id}")
+async def delete_branch(branch_id: str, admin: dict = Depends(get_admin_user)):
+    """Şube sil"""
+    result = await db.branches.delete_one({"id": branch_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Şube bulunamadı")
+    
+    return {"message": "Şube silindi"}
+
+
+@router.patch("/branches/{branch_id}/toggle")
+async def toggle_branch(branch_id: str, admin: dict = Depends(get_admin_user)):
+    """Şube aktif/pasif yap"""
+    branch = await db.branches.find_one({"id": branch_id})
+    if not branch:
+        raise HTTPException(status_code=404, detail="Şube bulunamadı")
+    
+    new_status = not branch.get('is_active', True)
+    await db.branches.update_one({"id": branch_id}, {"$set": {"is_active": new_status}})
+    
+    return {"message": "Şube durumu güncellendi", "is_active": new_status}
+
+
+# ==================== PRICING PLANS MANAGEMENT ====================
+
+@router.get("/pricing-plans")
+async def get_pricing_plans(admin: dict = Depends(get_admin_user)):
+    """Tüm fiyatlandırma planlarını listele"""
+    plans = await db.pricing_plans.find({}, {"_id": 0}).sort("price", 1).to_list(100)
+    
+    # Varsayılan planları ekle
+    if not plans:
+        default_plans = [
+            PricingPlan(name="Başlangıç", credits=10, price=100, currency="TRY", features=["10 IZE Analizi", "E-posta Desteği"]),
+            PricingPlan(name="Pro", credits=50, price=400, currency="TRY", is_popular=True, features=["50 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"]),
+            PricingPlan(name="Enterprise", credits=200, price=1200, currency="TRY", features=["200 IZE Analizi", "7/24 Destek", "Özel Entegrasyon", "API Erişimi"]),
+        ]
+        for plan in default_plans:
+            plan_dict = plan.model_dump()
+            plan_dict['created_at'] = plan_dict['created_at'].isoformat()
+            await db.pricing_plans.insert_one(plan_dict)
+        plans = await db.pricing_plans.find({}, {"_id": 0}).sort("price", 1).to_list(100)
+    
+    return plans
+
+
+@router.post("/pricing-plans")
+async def create_pricing_plan(plan_data: PricingPlanCreate, admin: dict = Depends(get_admin_user)):
+    """Yeni fiyatlandırma planı ekle"""
+    plan = PricingPlan(**plan_data.model_dump())
+    plan_dict = plan.model_dump()
+    plan_dict['created_at'] = plan_dict['created_at'].isoformat()
+    
+    await db.pricing_plans.insert_one(plan_dict)
+    
+    return {"message": "Plan eklendi", "plan": plan_dict}
+
+
+@router.put("/pricing-plans/{plan_id}")
+async def update_pricing_plan(plan_id: str, plan_update: PricingPlanUpdate, admin: dict = Depends(get_admin_user)):
+    """Fiyatlandırma planını güncelle"""
+    plan = await db.pricing_plans.find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan bulunamadı")
+    
+    update_data = plan_update.model_dump(exclude_unset=True)
+    if update_data:
+        await db.pricing_plans.update_one({"id": plan_id}, {"$set": update_data})
+    
+    updated_plan = await db.pricing_plans.find_one({"id": plan_id}, {"_id": 0})
+    return updated_plan
+
+
+@router.delete("/pricing-plans/{plan_id}")
+async def delete_pricing_plan(plan_id: str, admin: dict = Depends(get_admin_user)):
+    """Fiyatlandırma planını sil"""
+    result = await db.pricing_plans.delete_one({"id": plan_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Plan bulunamadı")
+    
+    return {"message": "Plan silindi"}
+
+
+# ==================== USER CREDIT MANAGEMENT ====================
+
+@router.patch("/users/{user_id}/set-unlimited-credits")
+async def set_unlimited_credits(user_id: str, unlimited: bool = True, admin: dict = Depends(get_admin_user)):
+    """Kullanıcıya sınırsız kredi ver/kaldır"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    await db.users.update_one({"id": user_id}, {"$set": {"has_unlimited_credits": unlimited}})
+    
+    return {"message": f"Sınırsız kredi {'verildi' if unlimited else 'kaldırıldı'}", "has_unlimited_credits": unlimited}
+
+
+@router.patch("/users/{user_id}/set-credits")
+async def set_user_credits(user_id: str, amount: int, admin: dict = Depends(get_admin_user)):
+    """Kullanıcının kredi miktarını ayarla"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    await db.users.update_one({"id": user_id}, {"$set": {"free_analyses_remaining": amount}})
+    
+    return {"message": f"Kredi {amount} olarak ayarlandı", "credits": amount}
