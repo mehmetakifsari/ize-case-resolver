@@ -279,10 +279,9 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - **Sender:** IZE Case Resolver
 
 ## Upcoming Tasks (P1)
-- [ ] Deploy to Coolify (visupanel.com)
+- [ ] Deploy to Coolify (visupanel.com) - READY
 - [ ] iyzico production API keys integration
-- [ ] User onboarding flow
-- [ ] Bulk operations (export, multi-select)
+- [ ] Paraşüt/Bizimhesap/Birfatura production API keys
 
 ## Future Tasks (P2)
 - [ ] Export reports to Excel/PDF
@@ -291,3 +290,4 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - [ ] Activity logging/audit trail
 - [ ] Email templates customization
 - [ ] Recurring subscription management (auto-renewal)
+- [ ] User onboarding flow
