@@ -6,7 +6,7 @@ import {
   Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, Clock, Menu, X,
   BarChart3, Archive, ChevronDown, ChevronRight, Plus, Trash2, Edit, Eye, EyeOff,
   Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard,
-  Banknote
+  Banknote, Infinity, UserPlus, MapPin, DollarSign, Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,16 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import translations from "./translations";
 import { PaymentPage, PaymentSuccessPage, PaymentPendingPage, PaymentCancelPage } from "./pages/PaymentPage";
 import { AdminPayments } from "./pages/Admin/AdminPayments";
@@ -27,7 +37,8 @@ import "@/App.css";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const BRANCHES = ["Bursa", "İzmit", "Orhanlı", "Hadımköy", "Keşan"];
+// Varsayılan şubeler (API'den dinamik olarak da alınabilir)
+const DEFAULT_BRANCHES = ["Bursa", "İzmit", "Orhanlı", "Hadımköy", "Keşan"];
 
 // ==================== LANGUAGE CONTEXT ====================
 
