@@ -27,6 +27,7 @@ from routes.warranty import router as warranty_router
 from routes.site_settings import router as site_settings_router
 from routes.payments import router as payments_router
 from routes.webhooks import router as webhooks_router
+from routes.settings import router as settings_router
 
 # Create the main app
 app = FastAPI(
