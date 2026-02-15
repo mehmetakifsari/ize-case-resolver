@@ -16,6 +16,12 @@ class SiteSettings(BaseModel):
     site_logo_url: Optional[str] = None
     favicon_url: Optional[str] = None
     
+    # Banka/Ödeme Bilgileri
+    bank_name: Optional[str] = None  # Banka adı
+    bank_iban: Optional[str] = None  # IBAN numarası
+    bank_account_holder: Optional[str] = None  # Hesap sahibi adı
+    bank_swift: Optional[str] = None  # SWIFT kodu (uluslararası transferler için)
+    
     # Dil Ayarları
     default_language: str = "tr"  # tr veya en
     
