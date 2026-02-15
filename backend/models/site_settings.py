@@ -66,6 +66,12 @@ class SiteSettingsUpdate(BaseModel):
     site_logo_url: Optional[str] = None
     favicon_url: Optional[str] = None
     
+    # Banka/Ödeme Bilgileri
+    bank_name: Optional[str] = None
+    bank_iban: Optional[str] = None
+    bank_account_holder: Optional[str] = None
+    bank_swift: Optional[str] = None
+    
     # Dil
     default_language: Optional[str] = None
     
