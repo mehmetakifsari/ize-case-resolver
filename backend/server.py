@@ -41,6 +41,8 @@ app.include_router(cases_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(warranty_router, prefix="/api")
 app.include_router(site_settings_router, prefix="/api")
+app.include_router(payments_router, prefix="/api")
+app.include_router(webhooks_router, prefix="/api")
 
 
 @app.get("/api/")
