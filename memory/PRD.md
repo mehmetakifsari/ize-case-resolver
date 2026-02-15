@@ -16,25 +16,32 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - JWT tabanlı authentication
 - İki rol: Admin ve User
 - 5 ücretsiz analiz kredisi yeni kullanıcılara
+- Sınırsız kredi verme özelliği
 
 ### 3. User Management
-- **Status**: ✅ COMPLETE
+- **Status**: ✅ COMPLETE (15 Şubat 2026 güncellemesi)
 - Kullanıcı profili alanları: full_name, email, phone_number, branch, role
 - Şifre karmaşıklık kuralları (8+ karakter, büyük/küçük harf, özel karakter)
-- Şube listesi: Bursa, İzmit, Orhanlı, Hadımköy, Keşan
+- **YENİ**: Admin panelinden kullanıcı ekleme
+- **YENİ**: Kredi miktarını manuel ayarlama
+- **YENİ**: Sınırsız kredi verme/kaldırma
+- Dinamik şube yönetimi
 
 ### 4. Admin Panel
-- **Status**: ✅ COMPLETE
+- **Status**: ✅ COMPLETE (15 Şubat 2026 güncellemesi)
 - Katlanabilir yan menü (sidebar)
 - Analytics Dashboard (istatistikler)
-- Kullanıcı yönetimi (CRUD, filtreleme, kredi ekleme)
+- Kullanıcı yönetimi (CRUD, filtreleme, kredi ayarlama, sınırsız kredi)
 - IZE case yönetimi (filtreleme, arşivleme, silme)
 - Garanti kuralları yönetimi
 - API key yönetimi (maskelenmiş gösterim)
+- **YENİ**: Admin IZE Analizi yapabilme
+- **YENİ**: Şube Yönetimi (ekleme/silme/aktif-pasif)
+- **YENİ**: Fiyat Yönetimi (kredi paketleri)
 
 ### 5. User Features
-- **Status**: ✅ COMPLETE
-- PDF yükleme ve analiz
+- **Status**: ✅ COMPLETE (15 Şubat 2026 güncellemesi)
+- PDF yükleme ve analiz (şube seçimi kaldırıldı - kayıttaki şube otomatik kullanılıyor)
 - Kendi analizlerini görüntüleme
 - Case detay sayfası (collapsible sections)
 
@@ -42,7 +49,32 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - **Status**: ✅ COMPLETE
 - Mobile responsive design
 - Dark/Light theme support
-- Türkçe arayüz
+- Türkçe/İngilizce çoklu dil desteği
+
+### 7. Branch Management
+- **Status**: ✅ COMPLETE (15 Şubat 2026)
+- Dinamik şube ekleme/silme
+- Şube aktif/pasif yapma
+- Varsayılan şubeler: Bursa, İzmit, Orhanlı, Hadımköy, Keşan
+
+### 8. Pricing Management  
+- **Status**: ✅ COMPLETE (15 Şubat 2026)
+- Kredi paketleri yönetimi
+- Fiyat, kredi miktarı, para birimi (TRY/USD/EUR)
+- Özellikler listesi
+- Öne çıkan plan işaretleme
+- Paket/Abonelik tipi seçimi
+
+### 9. Payment System
+- **Status**: ⚠️ MOCKED (Ödeme entegrasyonları pasif)
+- Stripe entegrasyonu (kod mevcut, test edilmedi)
+- iyzico entegrasyonu (kod mevcut, API key gerekli)
+- Banka transferi seçeneği
+
+### 10. Invoice System
+- **Status**: ⚠️ MOCKED (Fatura sistemi pasif)
+- PDF fatura oluşturma
+- E-fatura entegrasyonları (Paraşüt, Bizimhesap, Birfatura) - placeholder
 
 ## Architecture
 
