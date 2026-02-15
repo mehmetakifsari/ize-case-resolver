@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from datetime import datetime, timezone
-from models.user import User, UserInDB, UserCreate, UserUpdate, BRANCHES
+from models.user import (
+    User, UserInDB, UserCreate, UserUpdate, DEFAULT_BRANCHES,
+    Branch, BranchCreate, PricingPlan, PricingPlanCreate, PricingPlanUpdate
+)
 from models.settings import APISettings, APISettingsUpdate, EmailSettings, EmailSettingsUpdate
 from services.auth import get_password_hash
 from services.email import test_smtp_connection
