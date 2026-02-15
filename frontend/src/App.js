@@ -930,7 +930,11 @@ const AdminLayout = ({ children }) => {
       {/* Mobile Header */}
       <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FileText className="w-6 h-6 text-primary" />
+          {siteSettings?.site_logo_url ? (
+            <img src={siteSettings.site_logo_url} alt="Logo" className="h-6 object-contain" />
+          ) : (
+            <FileText className="w-6 h-6 text-primary" />
+          )}
           <span className="font-bold">{t("adminPanel")}</span>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
