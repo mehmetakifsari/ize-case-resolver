@@ -152,7 +152,7 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - GET /api/auth/me - Current user info
 
 ### Cases
-- POST /api/cases/analyze - Upload and analyze PDF
+- POST /api/cases/analyze - Upload and analyze PDF (with auto email notification)
 - GET /api/cases - List user's cases
 - GET /api/cases/{id} - Get case details
 - DELETE /api/cases/{id} - Delete case
@@ -169,7 +169,12 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - GET /api/admin/settings - Get API settings
 - PUT /api/admin/settings - Update API settings
 
-### Site Settings (NEW)
+### Email Settings (NEW)
+- GET /api/admin/email-settings - Get SMTP settings (Admin only)
+- PUT /api/admin/email-settings - Update SMTP settings (Admin only)
+- POST /api/admin/email-settings/test - Test SMTP connection (Admin only)
+
+### Site Settings
 - GET /api/site-settings - Get site settings (Public)
 - PUT /api/site-settings - Update site settings (Admin only)
 
