@@ -78,14 +78,9 @@ class UserUpdate(BaseModel):
     branch: Optional[str] = None
     role: Optional[str] = None
     is_active: Optional[bool] = None
+    is_email_verified: Optional[bool] = None
     free_analyses_remaining: Optional[int] = None
-    
-    @field_validator('branch')
-    @classmethod
-    def validate_branch(cls, v):
-        if v and v not in BRANCHES:
-            raise ValueError(f'Geçersiz şube. Şubeler: {", ".join(BRANCHES)}')
-        return v
+    has_unlimited_credits: Optional[bool] = None
 
 
 class UserLogin(BaseModel):
@@ -99,3 +94,55 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: dict
+
+
+# Şube yönetimi modelleri
+class Branch(BaseModel):
+    """Şube modeli"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class BranchCreate(BaseModel):
+    """Şube oluşturma modeli"""
+    name: str
+
+
+# Fiyatlandırma modelleri
+class PricingPlan(BaseModel):
+    """Fiyatlandırma planı modeli"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # Plan adı (ör: Başlangıç, Pro, Enterprise)
+    credits: int  # Kredi miktarı
+    price: float  # Fiyat
+    currency: str = "TRY"  # Para birimi
+    is_popular: bool = False  # Öne çıkan plan
+    is_active: bool = True
+    features: List[str] = []  # Özellikler listesi
+    plan_type: str = "package"  # package veya subscription
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PricingPlanCreate(BaseModel):
+    """Fiyatlandırma planı oluşturma"""
+    name: str
+    credits: int
+    price: float
+    currency: str = "TRY"
+    is_popular: bool = False
+    features: List[str] = []
+    plan_type: str = "package"
+
+
+class PricingPlanUpdate(BaseModel):
+    """Fiyatlandırma planı güncelleme"""
+    name: Optional[str] = None
+    credits: Optional[int] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    is_popular: Optional[bool] = None
+    is_active: Optional[bool] = None
+    features: Optional[List[str]] = None
+    plan_type: Optional[str] = None
