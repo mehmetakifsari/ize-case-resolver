@@ -314,6 +314,14 @@ export const translations = {
     uploadFavicon: "Favicon Yükle",
     logoUrl: "Logo URL (png, jpg, svg)",
     faviconUrl: "Favicon URL (ico, png)",
+    changeLogo: "Değiştir",
+    changeFavicon: "Değiştir",
+    orEnterUrl: "veya URL girin",
+    uploading: "Yükleniyor...",
+    uploadSuccess: "Dosya başarıyla yüklendi!",
+    uploadError: "Dosya yüklenirken hata oluştu",
+    invalidFileType: "Geçersiz dosya tipi. PNG, JPG, GIF, SVG, ICO veya WEBP yükleyin.",
+    fileTooLarge: "Dosya çok büyük. Maksimum 5MB.",
     
     // Email Verification
     verifyingEmail: "E-posta adresiniz doğrulanıyor...",
