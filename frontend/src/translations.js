@@ -95,6 +95,7 @@ export const translations = {
     additionalInfoRequired: "Ek Bilgi Gerekli",
     branchDistribution: "Şubelere Göre Dağılım",
     warrantyDecisions: "Garanti Kararları",
+    payments: "Ödemeler",
     
     // User Management
     userManagement: "Kullanıcı Yönetimi",
