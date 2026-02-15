@@ -71,7 +71,7 @@ class IyzicoPaymentService:
                 'basketId': basket_id,
                 'paymentGroup': 'PRODUCT',
                 'callbackUrl': callback_url,
-                'enabledInstallments': [1, 2, 3, 6, 9] if installment > 1 else [1],
+                'enabledInstallments': ['1', '2', '3', '6', '9'] if installment > 1 else ['1'],
                 'buyer': {
                     'id': buyer.get('id', str(int(time.time()))),
                     'name': buyer.get('name', 'Test'),
