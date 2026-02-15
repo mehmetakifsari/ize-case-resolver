@@ -3,11 +3,11 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Bağımlılıkları kopyala
-COPY package.json ./
+# Bağımlılık dosyalarını kopyala (yarn.lock dahil)
+COPY package.json yarn.lock* ./
 
-# yarn.lock yoksa oluştur ve bağımlılıkları yükle
-RUN yarn install --network-timeout 300000 --frozen-lockfile || yarn install --network-timeout 300000
+# Bağımlılıkları yükle
+RUN yarn install --network-timeout 300000 --frozen-lockfile 2>/dev/null || yarn install --network-timeout 300000
 
 # Kaynak kodu kopyala
 COPY . .
@@ -16,7 +16,7 @@ COPY . .
 ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
-# Production build (craco kullanılıyor)
+# Production build
 RUN yarn build
 
 # Nginx ile serve et
