@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import { 
   Upload, FileText, CheckCircle, XCircle, AlertCircle, List, Settings, Home, 
