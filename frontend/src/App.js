@@ -655,7 +655,7 @@ const RegisterPage = () => {
               <Select value={formData.branch} onValueChange={(value) => setFormData({...formData, branch: value})}>
                 <SelectTrigger data-testid="register-branch"><SelectValue placeholder={t("branch")} /></SelectTrigger>
                 <SelectContent>
-                  {BRANCHES.map(b => (<SelectItem key={b} value={b}>{b}</SelectItem>))}
+                  {branches.map(b => (<SelectItem key={b} value={b}>{b}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
