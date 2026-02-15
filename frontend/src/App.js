@@ -2157,6 +2157,7 @@ function App() {
               <Route path="/admin/email-settings" element={<PrivateRoute adminOnly><AdminEmailSettings /></PrivateRoute>} />
               <Route path="/admin/site-settings" element={<PrivateRoute adminOnly><AdminSiteSettings /></PrivateRoute>} />
               <Route path="/admin/payments" element={<PrivateRoute adminOnly><AdminPaymentsWrapper /></PrivateRoute>} />
+              <Route path="/admin/payment-settings" element={<PrivateRoute adminOnly><PaymentSettingsWrapper /></PrivateRoute>} />
               <Route path="/user/upload" element={<PrivateRoute><UserUpload /></PrivateRoute>} />
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
