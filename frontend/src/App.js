@@ -2690,6 +2690,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
               <Route path="/payment" element={<PrivateRoute><PaymentPageWrapper /></PrivateRoute>} />
               <Route path="/payment/success" element={<PrivateRoute><PaymentSuccessWrapper /></PrivateRoute>} />
               <Route path="/payment/pending" element={<PrivateRoute><PaymentPendingWrapper /></PrivateRoute>} />
