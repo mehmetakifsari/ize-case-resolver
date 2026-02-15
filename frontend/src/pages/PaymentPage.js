@@ -45,27 +45,54 @@ export const PaymentPage = ({ user, token, t, language }) => {
 
   const fetchPackages = async () => {
     try {
-      const [creditsRes, subsRes, bankRes] = await Promise.all([
-        axios.get(`${API}/payments/packages/credits`),
-        axios.get(`${API}/payments/packages/subscriptions`),
-        axios.get(`${API}/payments/bank-accounts`)
+      // Yeni public pricing-plans endpoint'inden çek
+      const [pricingRes, bankRes] = await Promise.all([
+        axios.get(`${API}/settings/public/pricing-plans`),
+        axios.get(`${API}/payments/bank-accounts`).catch(() => ({ data: { accounts: [], instructions: "" } }))
       ]);
-      setCreditPackages(creditsRes.data);
-      setSubscriptionPlans(subsRes.data);
+      
+      // Plan tipine göre ayır
+      const allPlans = pricingRes.data || [];
+      const credits = allPlans.filter(p => p.plan_type === "package");
+      const subs = allPlans.filter(p => p.plan_type === "subscription");
+      
+      // Eski format uyumluluğu için dönüştür
+      const formattedCredits = credits.map(p => ({
+        ...p,
+        price_try: p.currency === "TRY" ? p.price : p.price * 30,
+        price_usd: p.currency === "USD" ? p.price : p.price / 30,
+        price_eur: p.currency === "EUR" ? p.price : p.price / 35,
+      }));
+      
+      const formattedSubs = subs.map(p => ({
+        ...p,
+        price_try: p.currency === "TRY" ? p.price : p.price * 30,
+        price_usd: p.currency === "USD" ? p.price : p.price / 30,
+        price_eur: p.currency === "EUR" ? p.price : p.price / 35,
+      }));
+      
+      setCreditPackages(formattedCredits);
+      setSubscriptionPlans(formattedSubs);
       setBankAccounts(bankRes.data);
     } catch (err) {
       console.error("Paketler yüklenemedi:", err);
+      // Varsayılan paketler
+      setCreditPackages([
+        { id: "starter", name: "Başlangıç", credits: 10, price_try: 100, price_usd: 10, price_eur: 9, features: ["10 IZE Analizi", "E-posta Desteği"] },
+        { id: "pro", name: "Pro", credits: 50, price_try: 400, price_usd: 40, price_eur: 35, is_popular: true, features: ["50 IZE Analizi", "Öncelikli Destek"] },
+        { id: "enterprise", name: "Enterprise", credits: 200, price_try: 1200, price_usd: 120, price_eur: 105, features: ["200 IZE Analizi", "7/24 Destek"] }
+      ]);
     }
   };
 
   const getPrice = (pkg) => {
     const key = `price_${selectedCurrency.toLowerCase()}`;
-    return pkg[key] || 0;
+    return pkg[key] || pkg.price || 0;
   };
 
   const formatPrice = (amount) => {
     const symbols = { TRY: "₺", USD: "$", EUR: "€" };
-    return `${symbols[selectedCurrency]}${amount.toFixed(2)}`;
+    return `${symbols[selectedCurrency]}${Number(amount).toFixed(2)}`;
   };
 
   const handleCheckout = async () => {
