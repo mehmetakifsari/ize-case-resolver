@@ -192,6 +192,16 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 - PATCH /api/payments/admin/transactions/{id}/reject - Reject bank transfer (Admin)
 - GET /api/payments/admin/analytics - Payment statistics (Admin)
 
+### Settings (NEW - Session 4)
+- GET /api/settings/payment-providers - Get payment provider settings (Admin)
+- PUT /api/settings/payment-providers - Update payment provider settings (Admin)
+- GET /api/settings/invoice - Get invoice settings (Admin)
+- PUT /api/settings/invoice - Update invoice settings (Admin)
+- GET /api/settings/invoices - List all invoices (Admin)
+- POST /api/settings/invoices/generate/{transaction_id} - Generate invoice for transaction (Admin)
+- GET /api/settings/social-media - Get social media links (Public)
+- PUT /api/settings/social-media - Update social media links (Admin)
+
 ### Warranty Rules (UPDATED)
 - GET /api/warranty-rules - List rules
 - GET /api/warranty-rules?active_only=true - List active rules only
