@@ -6,6 +6,7 @@ from models.case import IZECase, IZECaseResponse
 from models.user import BRANCHES
 from services.pdf_processor import extract_text_from_pdf
 from services.ai_analyzer import analyze_ize_with_ai
+from services.email import send_analysis_email
 from routes.auth import get_current_active_user
 from database import db
 
