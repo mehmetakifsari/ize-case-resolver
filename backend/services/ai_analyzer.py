@@ -2,6 +2,8 @@ import os
 import json
 import logging
 from typing import Dict, List, Any, Tuple
+
+import httpx
 from fastapi import HTTPException
 from openai import AsyncOpenAI, RateLimitError
 
@@ -15,6 +17,7 @@ MAX_RULE_SINGLE_CHARS = 300
 MAX_INPUT_TOKENS_BUDGET = 3000
 PRIMARY_MAX_COMPLETION_TOKENS = 700
 FALLBACK_MAX_COMPLETION_TOKENS = 400
+GEMINI_MODEL = "gemini-1.5-flash"
 
 
 def _estimate_tokens(text: str) -> int:
@@ -29,6 +32,17 @@ def _trim_text(text: str, max_chars: int) -> str:
     if len(text) <= max_chars:
         return text
     return text[:max_chars] + "\n[... KIRPILDI ...]"
+
+
+def _clean_json_response_text(response_text: str) -> str:
+    response_text = response_text.strip()
+    if response_text.startswith("```json"):
+        response_text = response_text[7:]
+    if response_text.startswith("```"):
+        response_text = response_text[3:]
+    if response_text.endswith("```"):
+        response_text = response_text[:-3]
+    return response_text.strip()
 
 
 def _prioritize_pdf_lines(pdf_text: str, max_chars: int = MAX_PROMPT_CHARS) -> str:
@@ -170,17 +184,72 @@ Sadece JSON ver.
     return system_message, prompt
 
 
+async def _analyze_with_gemini(
+    system_message: str,
+    prompt: str,
+    google_api_key: str,
+    max_output_tokens: int,
+) -> Dict[str, Any]:
+    """Gemini REST API ile JSON analiz sonucu üret."""
+    endpoint = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+        f"?key={google_api_key}"
+    )
+
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {"text": f"{system_message}\n\n{prompt}"}
+                ],
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": max_output_tokens,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(endpoint, json=payload)
+
+    if response.status_code >= 400:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Gemini API hatası: {response.text[:400]}"
+        )
+
+    data = response.json()
+    candidates = data.get("candidates", [])
+    if not candidates:
+        raise HTTPException(status_code=500, detail="Gemini yanıtı boş döndü")
+
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = "\n".join([part.get("text", "") for part in parts if part.get("text")]).strip()
+    if not text:
+        raise HTTPException(status_code=500, detail="Gemini metin yanıtı üretmedi")
+
+    clean_text = _clean_json_response_text(text)
+    return json.loads(clean_text)
+
+
 async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]], db_settings: Dict[str, Any] = None) -> Dict[str, Any]:
-    """OpenAI ile IZE dosyasını analiz eder."""
+    """IZE dosyasını OpenAI (öncelikli) veya Gemini (fallback/alternatif) ile analiz eder."""
     try:
-        api_key = db_settings.get("openai_key") if db_settings else None
-        if not api_key:
-            api_key = os.environ.get("OPENAI_API_KEY", "")
+        openai_key = db_settings.get("openai_key") if db_settings else None
+        google_key = db_settings.get("google_key") if db_settings else None
 
-        if not api_key:
-            raise HTTPException(status_code=500, detail="OpenAI API anahtarı bulunamadı")
+        if not openai_key:
+            openai_key = os.environ.get("OPENAI_API_KEY", "")
+        if not google_key:
+            google_key = os.environ.get("GOOGLE_API_KEY", "")
 
-        client = AsyncOpenAI(api_key=api_key)
+        if not openai_key and not google_key:
+            raise HTTPException(status_code=500, detail="OpenAI veya Google API anahtarı bulunamadı")
+
+        openai_client = AsyncOpenAI(api_key=openai_key) if openai_key else None
 
         attempts = [
             (MAX_RULES_CHARS, MAX_PROMPT_CHARS, PRIMARY_MAX_COMPLETION_TOKENS),
@@ -188,7 +257,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
             (300, 1100, 250),
         ]
 
-        last_rate_limit_error = None
+        last_error = None
 
         for idx, (rules_limit, pdf_limit, completion_tokens) in enumerate(attempts, 1):
             system_message, prompt = _build_messages(
@@ -207,44 +276,83 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                 approx_input_tokens = _estimate_tokens(system_message) + _estimate_tokens(prompt)
 
             logger.info(
-                "AI deneme=%s input_tokens~%s max_completion=%s rules_limit=%s pdf_limit=%s",
+                "AI deneme=%s input_tokens~%s max_completion=%s rules_limit=%s pdf_limit=%s provider=%s",
                 idx,
                 approx_input_tokens,
                 completion_tokens,
                 rules_limit,
                 pdf_limit,
+                "openai" if openai_client else "gemini",
             )
 
-            try:
-                response = await client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": system_message},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.1,
-                    max_tokens=completion_tokens,
-                )
+            # OpenAI öncelikli, 429/limit durumunda Gemini fallback
+            if openai_client:
+                try:
+                    response = await openai_client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.1,
+                        max_tokens=completion_tokens,
+                    )
 
-                response_text = response.choices[0].message.content.strip()
-                if response_text.startswith("```json"):
-                    response_text = response_text[7:]
-                if response_text.startswith("```"):
-                    response_text = response_text[3:]
-                if response_text.endswith("```"):
-                    response_text = response_text[:-3]
+                    response_text = response.choices[0].message.content.strip()
+                    clean_text = _clean_json_response_text(response_text)
+                    return json.loads(clean_text)
 
-                return json.loads(response_text.strip())
+                except RateLimitError as e:
+                    last_error = e
+                    logger.warning("OpenAI rate limit deneme %s başarısız: %s", idx, str(e))
+                    if google_key:
+                        try:
+                            logger.info("Gemini fallback deneniyor (OpenAI rate limit)")
+                            return await _analyze_with_gemini(
+                                system_message=system_message,
+                                prompt=prompt,
+                                google_api_key=google_key,
+                                max_output_tokens=completion_tokens,
+                            )
+                        except Exception as ge:
+                            last_error = ge
+                            logger.warning("Gemini fallback başarısız: %s", str(ge))
+                    continue
+                except Exception as e:
+                    last_error = e
+                    logger.warning("OpenAI deneme %s başarısız: %s", idx, str(e))
+                    if google_key:
+                        try:
+                            logger.info("Gemini fallback deneniyor (OpenAI genel hata)")
+                            return await _analyze_with_gemini(
+                                system_message=system_message,
+                                prompt=prompt,
+                                google_api_key=google_key,
+                                max_output_tokens=completion_tokens,
+                            )
+                        except Exception as ge:
+                            last_error = ge
+                            logger.warning("Gemini fallback başarısız: %s", str(ge))
+                    continue
 
-            except RateLimitError as e:
-                last_rate_limit_error = e
-                logger.warning("Rate limit deneme %s başarısız: %s", idx, str(e))
-                continue
+            # OpenAI yoksa doğrudan Gemini
+            if google_key:
+                try:
+                    return await _analyze_with_gemini(
+                        system_message=system_message,
+                        prompt=prompt,
+                        google_api_key=google_key,
+                        max_output_tokens=completion_tokens,
+                    )
+                except Exception as ge:
+                    last_error = ge
+                    logger.warning("Gemini deneme %s başarısız: %s", idx, str(ge))
+                    continue
 
-        logger.error("OpenAI rate limit (tüm denemeler başarısız): %s", str(last_rate_limit_error))
+        logger.error("Tüm AI denemeleri başarısız: %s", str(last_error))
         raise HTTPException(
             status_code=429,
-            detail="OpenAI token limiti aşıldı. Warranty kural seti ve PDF içeriği otomatik kısaltıldı fakat yine de limit aşıldı; lütfen tekrar deneyin."
+            detail="OpenAI/Gemini token veya istek limiti aşıldı. Lütfen tekrar deneyin."
         )
 
     except json.JSONDecodeError as e:
