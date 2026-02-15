@@ -57,6 +57,23 @@ const LanguageProvider = ({ children }) => {
     fetchSiteSettings();
   }, []);
 
+  // Favicon'u dinamik olarak güncelle
+  useEffect(() => {
+    if (siteSettings?.favicon_url) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = siteSettings.favicon_url;
+    }
+    // Site title'ı güncelle
+    if (siteSettings?.site_title) {
+      document.title = siteSettings.site_title;
+    }
+  }, [siteSettings]);
+
   const fetchSiteSettings = async () => {
     try {
       const response = await axios.get(`${API}/site-settings`);
