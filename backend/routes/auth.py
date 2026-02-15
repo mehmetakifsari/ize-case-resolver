@@ -146,6 +146,54 @@ async def get_me(current_user: dict = Depends(get_current_active_user)):
         "branch": current_user.get('branch', ''),
         "role": current_user['role'],
         "is_active": current_user['is_active'],
+        "is_email_verified": current_user.get('is_email_verified', True),
+        "has_unlimited_credits": current_user.get('has_unlimited_credits', False),
         "free_analyses_remaining": current_user.get('free_analyses_remaining', 0),
         "total_analyses": current_user.get('total_analyses', 0)
     }
+
+
+@router.get("/verify-email/{token}")
+async def verify_email(token: str):
+    """E-posta doğrulama"""
+    user = await db.users.find_one({"verification_token": token}, {"_id": 0})
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Geçersiz doğrulama linki")
+    
+    # Token süresi kontrolü
+    if user.get('verification_expires'):
+        expires = datetime.fromisoformat(user['verification_expires'].replace('Z', '+00:00'))
+        if datetime.now(timezone.utc) > expires:
+            raise HTTPException(status_code=400, detail="Doğrulama linki süresi dolmuş. Lütfen yeni bir doğrulama e-postası isteyin.")
+    
+    # Kullanıcıyı doğrulanmış olarak işaretle
+    await db.users.update_one(
+        {"id": user['id']},
+        {"$set": {"is_email_verified": True}, "$unset": {"verification_token": "", "verification_expires": ""}}
+    )
+    
+    return {"message": "E-posta adresiniz başarıyla doğrulandı! Artık giriş yapabilirsiniz.", "verified": True}
+
+
+@router.post("/resend-verification")
+async def resend_verification(current_user: dict = Depends(get_current_user)):
+    """Doğrulama e-postasını yeniden gönder"""
+    if current_user.get('is_email_verified'):
+        raise HTTPException(status_code=400, detail="E-posta adresiniz zaten doğrulanmış")
+    
+    # Yeni token oluştur
+    verification_token = str(uuid.uuid4())
+    verification_expires = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {"$set": {"verification_token": verification_token, "verification_expires": verification_expires}}
+    )
+    
+    # E-posta gönder
+    try:
+        await send_verification_email(current_user['email'], current_user['full_name'], verification_token)
+        return {"message": "Doğrulama e-postası gönderildi"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {str(e)}")
