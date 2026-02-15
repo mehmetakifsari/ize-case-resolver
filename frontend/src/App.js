@@ -2068,6 +2068,11 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/payment" element={<PrivateRoute><PaymentPageWrapper /></PrivateRoute>} />
+              <Route path="/payment/success" element={<PrivateRoute><PaymentSuccessWrapper /></PrivateRoute>} />
+              <Route path="/payment/pending" element={<PrivateRoute><PaymentPendingWrapper /></PrivateRoute>} />
+              <Route path="/payment/cancel" element={<PaymentCancelWrapper />} />
+              <Route path="/payment/error" element={<PaymentCancelWrapper />} />
               <Route path="/dashboard" element={<PrivateRoute><DashboardRouter /></PrivateRoute>} />
               <Route path="/admin/dashboard" element={<PrivateRoute adminOnly><AdminDashboard /></PrivateRoute>} />
               <Route path="/admin/users" element={<PrivateRoute adminOnly><AdminUsers /></PrivateRoute>} />
@@ -2076,6 +2081,7 @@ function App() {
               <Route path="/admin/api-settings" element={<PrivateRoute adminOnly><AdminAPISettings /></PrivateRoute>} />
               <Route path="/admin/email-settings" element={<PrivateRoute adminOnly><AdminEmailSettings /></PrivateRoute>} />
               <Route path="/admin/site-settings" element={<PrivateRoute adminOnly><AdminSiteSettings /></PrivateRoute>} />
+              <Route path="/admin/payments" element={<PrivateRoute adminOnly><AdminPaymentsWrapper /></PrivateRoute>} />
               <Route path="/user/upload" element={<PrivateRoute><UserUpload /></PrivateRoute>} />
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
