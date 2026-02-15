@@ -71,7 +71,7 @@ KARAR GEREKÇELERİ
         else:
             body += "Belirtilmemiş\n"
 
-        body += f"""
+        body += """
 YAPILAN İŞLEMLER
 ----------------
 """
@@ -82,7 +82,7 @@ YAPILAN İŞLEMLER
         else:
             body += "Belirtilmemiş\n"
 
-        body += f"""
+        body += """
 DEĞİŞEN PARÇALAR
 ----------------
 """
