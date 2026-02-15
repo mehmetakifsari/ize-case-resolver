@@ -2516,6 +2516,8 @@ function App() {
               <Route path="/admin/dashboard" element={<PrivateRoute adminOnly><AdminDashboard /></PrivateRoute>} />
               <Route path="/admin/users" element={<PrivateRoute adminOnly><AdminUsers /></PrivateRoute>} />
               <Route path="/admin/cases" element={<PrivateRoute adminOnly><AdminAllCases /></PrivateRoute>} />
+              <Route path="/admin/branches" element={<PrivateRoute adminOnly><AdminBranches /></PrivateRoute>} />
+              <Route path="/admin/pricing" element={<PrivateRoute adminOnly><AdminPricing /></PrivateRoute>} />
               <Route path="/admin/rules" element={<PrivateRoute adminOnly><AdminRules /></PrivateRoute>} />
               <Route path="/admin/api-settings" element={<PrivateRoute adminOnly><AdminAPISettings /></PrivateRoute>} />
               <Route path="/admin/email-settings" element={<PrivateRoute adminOnly><AdminEmailSettings /></PrivateRoute>} />
