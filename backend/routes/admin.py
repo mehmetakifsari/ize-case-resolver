@@ -49,6 +49,13 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
     result = await db.users.aggregate(pipeline).to_list(1)
     total_analyses = result[0]["total"] if result else 0
     
+    # Toplam gönderilen e-posta sayısı
+    email_pipeline = [
+        {"$group": {"_id": None, "total": {"$sum": "$emails_sent"}}}
+    ]
+    email_result = await db.users.aggregate(email_pipeline).to_list(1)
+    total_emails_sent = email_result[0]["total"] if email_result else 0
+    
     return {
         "users": {
             "total": total_users,
@@ -63,7 +70,8 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
         },
         "branches": branch_stats,
         "decisions": decision_stats,
-        "total_analyses": total_analyses
+        "total_analyses": total_analyses,
+        "total_emails_sent": total_emails_sent
     }
 
 
