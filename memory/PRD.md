@@ -253,6 +253,19 @@ IZE Case Resolver, Renault Trucks için yurtdışı garanti dosyalarını (IZE P
 28. ✅ 3 Currency support (TRY, USD, EUR)
 29. ✅ Payment management page in admin panel
 30. ✅ Bank transfer approval/rejection workflow
+31. ✅ Invoice System with PDF generation
+    - Professional invoice design
+    - Auto-generate after payment
+    - Paraşüt integration (ready)
+    - Bizimhesap integration (ready)
+    - Birfatura integration (ready)
+32. ✅ Payment Settings page (Stripe, iyzico, Bank Transfer config)
+33. ✅ Invoice Settings page (Company info, E-fatura providers)
+34. ✅ Social Media links in Site Settings
+35. ✅ Footer with social media icons
+36. ✅ README.md for GitHub
+37. ✅ .env.example files
+38. ✅ Docker & Coolify deployment ready
 
 ## Test Credentials
 - **Admin:** admin@ize.com / Admin@123!
