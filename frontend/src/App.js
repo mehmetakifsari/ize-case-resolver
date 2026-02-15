@@ -2145,6 +2145,36 @@ const AdminSiteSettings = () => {
               <div><Label>{t("siteName")}</Label><Input value={settings?.site_name || ""} onChange={(e) => handleChange("site_name", e.target.value)} placeholder="IZE Case Resolver" /></div>
               <div><Label>{t("siteTitle")}</Label><Input value={settings?.site_title || ""} onChange={(e) => handleChange("site_title", e.target.value)} placeholder="IZE Case Resolver - AI ile Garanti Analizi" /></div>
               <div><Label>{t("siteDescription")}</Label><Textarea value={settings?.site_description || ""} onChange={(e) => handleChange("site_description", e.target.value)} placeholder="Site açıklaması..." rows={3} /></div>
+              
+              {/* Logo ve Favicon */}
+              <Separator className="my-4" />
+              <h3 className="font-semibold text-lg flex items-center gap-2"><Image className="w-5 h-5" />{t("siteAppearance")}</h3>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label>{t("siteLogo")}</Label>
+                  <Input value={settings?.site_logo_url || ""} onChange={(e) => handleChange("site_logo_url", e.target.value)} placeholder="https://example.com/logo.png" />
+                  <p className="text-xs text-gray-500 mt-1">{t("logoUrl")}</p>
+                  {settings?.site_logo_url && (
+                    <div className="mt-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
+                      <img src={settings.site_logo_url} alt="Logo Preview" className="max-h-16 object-contain" onError={(e) => e.target.style.display='none'} />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label>{t("siteFavicon")}</Label>
+                  <Input value={settings?.favicon_url || ""} onChange={(e) => handleChange("favicon_url", e.target.value)} placeholder="https://example.com/favicon.ico" />
+                  <p className="text-xs text-gray-500 mt-1">{t("faviconUrl")}</p>
+                  {settings?.favicon_url && (
+                    <div className="mt-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
+                      <img src={settings.favicon_url} alt="Favicon Preview" className="w-8 h-8 object-contain" onError={(e) => e.target.style.display='none'} />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Separator className="my-4" />
+              
               <div>
                 <Label>{t("defaultLanguage")}</Label>
                 <Select value={settings?.default_language || "tr"} onValueChange={(v) => handleChange("default_language", v)}>
