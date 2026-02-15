@@ -5,10 +5,9 @@ WORKDIR /app
 
 # Bağımlılıkları kopyala
 COPY package.json ./
-COPY yarn.lock* ./
 
-# Bağımlılıkları yükle
-RUN yarn install
+# Bağımlılıkları yükle (yarn.lock oluşturulacak)
+RUN yarn install --network-timeout 100000
 
 # Kaynak kodu kopyala
 COPY . .
