@@ -10,6 +10,8 @@ services:
       - mongodb_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=ize_database
+    ports:
+      - "127.0.0.1:27017:27017"
     networks:
       - ize-network
 
