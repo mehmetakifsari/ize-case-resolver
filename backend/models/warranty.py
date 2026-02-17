@@ -12,7 +12,7 @@ class WarrantyRule(BaseModel):
     rule_version: str
     rule_text: str
     keywords: List[str] = []
-    source_type: str = "manual"  # "manual" veya "pdf"
+    source_type: str = "manual"  # "manual", "pdf" veya "text"
     source_filename: Optional[str] = None
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -23,6 +23,14 @@ class WarrantyRuleCreate(BaseModel):
     rule_version: str
     rule_text: str
     keywords: List[str] = []
+
+
+class WarrantyRuleTextCreate(BaseModel):
+    """Metin tabanlı garanti kuralı oluşturma modeli"""
+    rule_version: str
+    rule_text: str
+    keywords: List[str] = []
+    source_reference: Optional[str] = None
 
 
 class WarrantyRuleUpdate(BaseModel):
