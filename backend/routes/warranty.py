@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import List, Optional
 from datetime import datetime, timezone
-from models.warranty import WarrantyRule, WarrantyRuleCreate, WarrantyRuleUpdate
+from models.warranty import (
+    WarrantyRule,
+    WarrantyRuleCreate,
+    WarrantyRuleTextCreate,
+    WarrantyRuleUpdate,
+)
 from routes.auth import get_admin_user
 from database import db
 import pdfplumber
@@ -47,6 +52,29 @@ async def create_warranty_rule(rule: WarrantyRuleCreate, admin: dict = Depends(g
     doc = rule_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     
+    await db.warranty_rules.insert_one(doc)
+    return rule_obj
+
+
+@router.post("/upload-text", response_model=WarrantyRule)
+async def upload_warranty_text(rule: WarrantyRuleTextCreate, admin: dict = Depends(get_admin_user)):
+    """PDF yerine düz metin garanti kuralı yükler (Sadece admin)."""
+    normalized_text = rule.rule_text.strip()
+    if not normalized_text:
+        raise HTTPException(status_code=400, detail="Kural metni boş olamaz")
+
+    rule_obj = WarrantyRule(
+        rule_version=rule.rule_version,
+        rule_text=normalized_text,
+        keywords=rule.keywords,
+        source_type="text",
+        source_filename=rule.source_reference,
+        is_active=True,
+    )
+
+    doc = rule_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+
     await db.warranty_rules.insert_one(doc)
     return rule_obj
 
