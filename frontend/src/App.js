@@ -2592,6 +2592,39 @@ const CaseDetail = () => {
   };
 
   const toggleSection = (section) => { setExpandedSections(prev => ({...prev, [section]: !prev[section]})); };
+  const parseBilingualText = (value) => {
+    if (!value || typeof value !== "string") return null;
+
+    const normalized = value.replace(/\n/g, " ").trim();
+
+    const formats = [
+      /^Original:\s*(.*?)\s*\|\s*TR:\s*(.*)$/i,
+      /^Orijinal:\s*(.*?)\s*\|\s*TR:\s*(.*)$/i,
+      /^Original:\s*(.*?)\s*\|\s*Turkish:\s*(.*)$/i,
+      /^Original:\s*(.*?)\s*\|\s*Türkçe:\s*(.*)$/i,
+    ];
+
+    const match = formats.map((regex) => normalized.match(regex)).find(Boolean);
+    if (!match) return null;
+
+    const original = match[1]?.trim();
+    const turkish = match[2]?.trim();
+    if (!original && !turkish) return null;
+
+    return { original, turkish };
+  };
+
+  const renderBilingualText = (value, className = "text-sm") => {
+    const parsed = parseBilingualText(value);
+    if (!parsed) return <p className={className}>{value || "-"}</p>;
+
+    return (
+      <div className={`${className} space-y-1`}>
+        <p><span className="text-gray-500">{t("originalText")}:</span> {parsed.original || "-"}</p>
+        <p><span className="text-gray-500">{t("turkishTranslation")}:</span> {parsed.turkish || "-"}</p>
+      </div>
+    );
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   if (!caseData) return null;
@@ -2641,9 +2674,16 @@ const CaseDetail = () => {
             {expandedSections.warranty && (
               <CardContent className="space-y-4">
                 <div><span className="text-gray-500">{t("withinWarranty")}:</span> {caseData.is_within_2_year_warranty ? <Badge className="bg-green-100 text-green-800">{t("yes")}</Badge> : <Badge className="bg-red-100 text-red-800">{t("no")}</Badge>}</div>
-                {caseData.decision_rationale?.length > 0 && (<div><span className="text-gray-500 block mb-2">{t("decisionRationale")}:</span><ul className="list-disc list-inside space-y-1">{caseData.decision_rationale.map((r, i) => (<li key={i} className="text-sm">{r}</li>))}</ul></div>)}
-                <div><span className="text-gray-500">{t("failureComplaint")}:</span><p className="text-sm mt-1">{caseData.failure_complaint || "-"}</p></div>
-                <div><span className="text-gray-500">{t("failureCause")}:</span><p className="text-sm mt-1">{caseData.failure_cause || "-"}</p></div>
+                {caseData.decision_rationale?.length > 0 && (
+                  <div>
+                    <span className="text-gray-500 block mb-2">{t("decisionRationale")}:</span>
+                    <ul className="list-disc list-inside space-y-2">
+                      {caseData.decision_rationale.map((r, i) => (<li key={i}>{renderBilingualText(r)}</li>))}
+                    </ul>
+                  </div>
+                )}
+                <div><span className="text-gray-500">{t("failureComplaint")}:</span><div className="mt-1">{renderBilingualText(caseData.failure_complaint)}</div></div>
+                <div><span className="text-gray-500">{t("failureCause")}:</span><div className="mt-1">{renderBilingualText(caseData.failure_cause)}</div></div>
               </CardContent>
             )}
           </Card>
@@ -2654,9 +2694,29 @@ const CaseDetail = () => {
             </CardHeader>
             {expandedSections.operations && (
               <CardContent className="space-y-4">
-                {caseData.operations_performed?.length > 0 && (<div><span className="text-gray-500 block mb-2">{t("operations")}:</span><ul className="list-disc list-inside space-y-1">{caseData.operations_performed.map((op, i) => (<li key={i} className="text-sm">{op}</li>))}</ul></div>)}
-                {caseData.parts_replaced?.length > 0 && (<div><span className="text-gray-500 block mb-2">{t("replacedParts")}:</span><div className="space-y-2">{caseData.parts_replaced.map((part, i) => (<div key={i} className="bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm"><strong>{part.partName}</strong> x{part.qty}{part.description && <p className="text-gray-500 text-xs">{part.description}</p>}</div>))}</div></div>)}
-                <div><span className="text-gray-500">{t("repairSummary")}:</span><p className="text-sm mt-1">{caseData.repair_process_summary || "-"}</p></div>
+                {caseData.operations_performed?.length > 0 && (
+                  <div>
+                    <span className="text-gray-500 block mb-2">{t("operations")}:</span>
+                    <ul className="list-disc list-inside space-y-2">
+                      {caseData.operations_performed.map((op, i) => (<li key={i}>{renderBilingualText(op)}</li>))}
+                    </ul>
+                  </div>
+                )}
+                {caseData.parts_replaced?.length > 0 && (
+                  <div>
+                    <span className="text-gray-500 block mb-2">{t("replacedParts")}:</span>
+                    <div className="space-y-2">
+                      {caseData.parts_replaced.map((part, i) => (
+                        <div key={i} className="bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm space-y-1">
+                          <div className="flex items-center gap-1"><strong>{part.partName || "-"}</strong> x{part.qty}</div>
+                          <div>{renderBilingualText(part.partName, "text-xs")}</div>
+                          {part.description && <div>{renderBilingualText(part.description, "text-xs")}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div><span className="text-gray-500">{t("repairSummary")}:</span><div className="mt-1">{renderBilingualText(caseData.repair_process_summary)}</div></div>
               </CardContent>
             )}
           </Card>
