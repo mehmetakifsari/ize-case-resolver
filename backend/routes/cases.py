@@ -51,7 +51,10 @@ async def analyze_ize_pdf(
         raise HTTPException(status_code=400, detail="PDF'den yeterli metin çıkarılamadı")
     
     # Garanti kurallarını al
-    warranty_rules = await db.warranty_rules.find({}, {"_id": 0}).to_list(100)
+    warranty_rules = await db.warranty_rules.find(
+        {"is_active": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
     
     if not warranty_rules:
         logger.warning("Garanti kuralı bulunamadı, varsayılan kurallar kullanılıyor")
@@ -100,7 +103,7 @@ async def analyze_ize_pdf(
         email_body=analysis_result.get('email_body', ''),
         pdf_file_name=file.filename,
         extracted_text=extracted_text[:2000],
-        binder_version_used=warranty_rules[0]['rule_version'] if warranty_rules else "default",
+        binder_version_used=warranty_rules[0].get('rule_version', 'default') if warranty_rules else "default",
         month=created_at.month,
         year=created_at.year
     )
