@@ -1323,6 +1323,7 @@ const AdminUsers = () => {
 const AdminAllCases = () => {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const [filter, setFilter] = useState({ branch: "", archived: "" });
   const { token } = useAuth();
   const { t } = useLanguage();
@@ -1332,15 +1333,32 @@ const AdminAllCases = () => {
 
   const fetchCases = async () => {
     try {
+      setLoading(true);
+      setErrorMessage("");
       let url = `${API}/admin/cases`;
       const params = new URLSearchParams();
       if (filter.branch) params.append("branch", filter.branch);
       if (filter.archived !== "") params.append("archived", filter.archived);
       if (params.toString()) url += `?${params.toString()}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-      setCases(response.data);
+      const normalizedCases = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.cases)
+          ? response.data.cases
+          : null;
+
+      if (normalizedCases) {
+        setCases(normalizedCases);
+      } else {
+        setCases([]);
+        setErrorMessage(t("error"));
+        console.error("Unexpected /admin/cases response:", response.data);
+      }
     } catch (error) {
-      console.error("Error:", error);
+      setCases([]);
+      const detail = error?.response?.data?.detail;
+      setErrorMessage(typeof detail === "string" ? detail : t("error"));
+      console.error("Error loading admin cases:", error);
     } finally {
       setLoading(false);
     }
@@ -1372,6 +1390,11 @@ const AdminAllCases = () => {
 
       {loading ? <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div> : (
         <div className="space-y-4">
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
           {cases.map(c => (
             <Card key={c.id} className={c.is_archived ? "opacity-60" : ""} data-testid={`case-card-${c.id}`}>
               <CardContent className="p-4">
@@ -1379,7 +1402,7 @@ const AdminAllCases = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{c.ize_no}</span><Badge className={getDecisionBadge(c.warranty_decision)}>{c.warranty_decision}</Badge>{c.is_archived && <Badge variant="secondary"><Archive className="w-3 h-3 mr-1" />{t("archived")}</Badge>}</div>
                     <p className="text-sm text-gray-500">{c.company} - {c.case_title}</p>
-                    <div className="flex gap-4 text-xs text-gray-500">{c.branch && <span><Building className="w-3 h-3 inline mr-1" />{c.branch}</span>}<span>{new Date(c.created_at).toLocaleDateString('tr-TR')}</span></div>
+                    <div className="flex gap-4 text-xs text-gray-500">{c.branch && <span><Building className="w-3 h-3 inline mr-1" />{c.branch}</span>}<span>{c.created_at ? new Date(c.created_at).toLocaleDateString('tr-TR') : "-"}</span></div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => navigate(`/case/${c.id}`)}><Eye className="w-4 h-4 mr-1" />{t("view")}</Button>
