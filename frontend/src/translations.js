@@ -152,6 +152,8 @@ export const translations = {
     subject: "Konu",
     content: "İçerik",
     copyEmail: "Email Metnini Kopyala",
+    originalText: "Orijinal",
+    turkishTranslation: "Türkçe Çeviri",
     back: "Geri",
     
     // Settings
@@ -486,6 +488,8 @@ export const translations = {
     subject: "Subject",
     content: "Content",
     copyEmail: "Copy Email Text",
+    originalText: "Original",
+    turkishTranslation: "Turkish Translation",
     back: "Back",
     
     // Settings
