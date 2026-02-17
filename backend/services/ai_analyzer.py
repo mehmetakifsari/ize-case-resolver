@@ -178,6 +178,13 @@ JSON şeması:
   "email_body": ""
 }}
 
+ÖNEMLİ BİL-DİL KURALI:
+- Metin alanlarında (decision_rationale, failure_complaint, failure_cause, operations_performed, parts_replaced.partName, parts_replaced.description, repair_process_summary)
+  mümkünse hem orijinal dili hem Türkçe çeviriyi TEK string içinde ver.
+- Zorunlu format: "Original: <orijinal metin> | TR: <türkçe çeviri>"
+- Orijinal metin zaten Türkçeyse yine aynı formatı kullan ve TR kısmına aynı metni yaz.
+
+
 Sadece JSON ver.
 """
 
