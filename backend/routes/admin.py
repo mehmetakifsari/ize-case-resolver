@@ -90,6 +90,62 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
     }
 
 
+@router.get("/system-logs")
+async def get_system_logs(
+    level: Optional[str] = None,
+    event_type: Optional[str] = None,
+    limit: int = 100,
+    admin: dict = Depends(get_admin_user)
+):
+    """Sistem loglarını filtreli listele (Sadece admin)"""
+    query = {}
+    if level:
+        query["level"] = level.upper()
+    if event_type:
+        query["event_type"] = event_type
+
+    safe_limit = max(1, min(limit, 300))
+    logs = await db.system_logs.find(query, {"_id": 0}).sort("created_at", -1).to_list(safe_limit)
+    return logs
+
+
+@router.get("/system-logs/summary")
+async def get_system_logs_summary(admin: dict = Depends(get_admin_user)):
+    """Sistem logları için özet istatistikler"""
+    total = await db.system_logs.count_documents({})
+    error_count = await db.system_logs.count_documents({"level": "ERROR"})
+    warning_count = await db.system_logs.count_documents({"level": "WARNING"})
+    security_count = await db.system_logs.count_documents({"event_type": "security_alert"})
+
+    from datetime import timedelta
+    day_ago = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    recent_24h = await db.system_logs.count_documents({"created_at": {"$gte": day_ago}})
+
+    top_paths = await db.system_logs.aggregate([
+        {"$group": {"_id": "$path", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]).to_list(5)
+
+    top_security_indicators = await db.system_logs.aggregate([
+        {"$unwind": "$security_indicators"},
+        {"$group": {"_id": "$security_indicators", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]).to_list(5)
+
+    return {
+        "total": total,
+        "errors": error_count,
+        "warnings": warning_count,
+        "security_alerts": security_count,
+        "recent_24h": recent_24h,
+        "top_paths": [{"path": item.get("_id") or "-", "count": item.get("count", 0)} for item in top_paths],
+        "top_security_indicators": [{"indicator": item.get("_id"), "count": item.get("count", 0)} for item in top_security_indicators],
+    }
+
+
+
 # ==================== USER MANAGEMENT ====================
 
 @router.get("/users")
