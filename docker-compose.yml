@@ -50,10 +50,10 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP Router
-      - "traefik.http.routers.ize-backend.rule=Host(`api.ize.visupanel.com`)"
+      - "traefik.http.routers.ize-backend.rule=Host(`api-ize.visupanel.com`)"
       - "traefik.http.routers.ize-backend.entrypoints=http"
       # HTTPS Router
-      - "traefik.http.routers.ize-backend-secure.rule=Host(`api.ize.visupanel.com`)"
+      - "traefik.http.routers.ize-backend-secure.rule=Host(`api-ize.visupanel.com`)"
       - "traefik.http.routers.ize-backend-secure.entrypoints=https"
       - "traefik.http.routers.ize-backend-secure.tls=true"
       - "traefik.http.routers.ize-backend-secure.tls.certresolver=letsencrypt"
@@ -69,7 +69,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_BACKEND_URL=https://api.ize.visupanel.com
+        - REACT_APP_BACKEND_URL=https://api-ize.visupanel.com
     container_name: ize-frontend
     restart: unless-stopped
     depends_on:
