@@ -20,7 +20,7 @@ Bu rehber, IZE Case Resolver uygulamasını Coolify üzerinde deploy etmenizi sa
 | Servis | Domain | Açıklama |
 |--------|--------|----------|
 | Frontend | `ize.visupanel.com` | Ana uygulama |
-| Backend | `api.ize.visupanel.com` | API servisi |
+| Backend | `api-ize.visupanel.com` | API servisi |
 
 ---
 
@@ -42,9 +42,23 @@ TTL: 14400
 
 ### ⚠️ ÖNEMLİ SSL AYARLARI
 
-**Cloudflare kullanıyorsanız:**
-- Proxy'yi **KAPATMALISINIZ** (DNS Only - Gri bulut)
-- VEYA SSL/TLS ayarını **"Full (Strict)"** yapın
+3. **Cloudflare kullanıyorsanız (turuncu bulut/proxy açık)**
+   - SSL/TLS mode mutlaka **Full (strict)** olmalı
+   - **Flexible kullanmayın** (Coolify/Traefik origin HTTPS ile çalıştığı için handshake bozulur)
+   - `api.ize.visupanel.com` için origin sertifikası geçerli olmalı (Coolify'da "Generate SSL Certificate" + redeploy)
+   - Sertifika henüz hazır değilse geçici olarak DNS kaydını **DNS only (gri bulut)** yapıp testi öyle yapın
+
+4. **Cloudflare hata koduna göre teşhis**
+   - **525**: Cloudflare ↔ origin TLS handshake başarısız (çoğunlukla origin cert yok/yanlış)
+   - **526**: Origin sertifikası geçersiz (expired, domain mismatch, self-signed)
+   - **522/524**: SSL değil, origin erişim/timeout problemi (firewall/port/routing)
+
+5. **Doğru doğrulama komutları (ReqBin yerine kendi terminalinizde)**
+   ```bash
+   curl -Iv https://api.ize.visupanel.com/api/health
+   openssl s_client -connect api.ize.visupanel.com:443 -servername api.ize.visupanel.com </dev/null | openssl x509 -noout -issuer -subject -dates
+   nslookup api.ize.visupanel.com
+   ``
 
 **Hostinger DNS kullanıyorsanız:**
 - Ek bir ayar gerekmez, Coolify SSL sertifikasını otomatik alır
