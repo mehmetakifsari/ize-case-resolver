@@ -2674,11 +2674,40 @@ const UserUpload = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [isDragActive, setIsDragActive] = useState(false);
   const { token, user, fetchUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const Layout = user?.role === "admin" ? AdminLayout : UserLayout;
 
+  const handleFileSelection = (selectedFile) => {
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    setError("");
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const droppedFile = e.dataTransfer?.files?.[0];
+    handleFileSelection(droppedFile);
+  };
+
+                                        
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -2712,8 +2741,14 @@ const UserUpload = () => {
           <form onSubmit={handleUpload} className="space-y-6">
             <div>
               <Label>PDF</Label>
-              <div className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center ${file ? 'border-primary bg-primary/5' : 'border-gray-300'}`}>
-                <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} className="hidden" id="pdf-upload" data-testid="file-input" />
+              <div
+                className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center transition-colors ${file || isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300'}`}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input type="file" accept=".pdf" onChange={(e) => handleFileSelection(e.target.files[0])} className="hidden" id="pdf-upload" data-testid="file-input" />
                 <label htmlFor="pdf-upload" className="cursor-pointer">
                   <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   {file ? <p className="text-primary font-medium">{file.name}</p> : (<><p className="text-gray-600">{t("selectFile")}</p><p className="text-sm text-gray-400 mt-1">{t("maxFileSize")}</p></>)}
