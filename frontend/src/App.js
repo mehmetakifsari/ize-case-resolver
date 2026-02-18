@@ -34,7 +34,25 @@ import { AdminPayments } from "./pages/Admin/AdminPayments";
 import { PaymentSettings } from "./pages/Admin/PaymentSettings";
 import "@/App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const resolveBackendUrl = () => {
+  const configuredUrl = process.env.REACT_APP_BACKEND_URL?.trim();
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  const { protocol, hostname } = window.location;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8001";
+  }
+
+  if (hostname.startsWith("api.")) {
+    return `${protocol}//${hostname}`;
+  }
+
+  return `${protocol}//api.${hostname}`;
+};
+
+const BACKEND_URL = resolveBackendUrl();
 const API = `${BACKEND_URL}/api`;
 
 // Varsayılan şubeler (API'den dinamik olarak da alınabilir)
@@ -186,6 +204,47 @@ const ThemeProvider = ({ children }) => {
 };
 
 const useTheme = () => useContext(ThemeContext);
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: "" };
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      errorMessage: error?.message || "Unexpected application error",
+    };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Unhandled React render error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <CardTitle>Uygulama hatası oluştu</CardTitle>
+              <CardDescription>
+                Sayfa yüklenirken beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 break-all">{this.state.errorMessage}</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 
 // ==================== SEO HEAD COMPONENT ====================
 
@@ -1322,6 +1381,7 @@ const AdminUsers = () => {
 
 const AdminAllCases = () => {
   const [cases, setCases] = useState([]);
+  const [branches, setBranches] = useState(DEFAULT_BRANCHES);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [filter, setFilter] = useState({ branch: "", archived: "" });
@@ -1329,10 +1389,24 @@ const AdminAllCases = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-    useEffect(() => {
-    fetchCases();
-    fetchBranches();
-  }, [filter]);
+  useEffect(() => { fetchCases(); }, [filter]);
+  useEffect(() => { fetchBranches(); }, []);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/public/branches`);
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const normalizedBranches = response.data
+          .map((branch) => (typeof branch?.name === "string" ? branch.name.trim() : ""))
+          .filter(Boolean);
+        if (normalizedBranches.length > 0) {
+          setBranches(normalizedBranches);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
 
   const fetchBranches = async () => {
     try {
@@ -2898,12 +2972,13 @@ const PaymentSettingsWrapper = () => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <SEOHead />
-          <BrowserRouter>
-            <Routes>
+    <AppErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <SEOHead />
+            <BrowserRouter>
+              <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -2930,11 +3005,12 @@ function App() {
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }
 
