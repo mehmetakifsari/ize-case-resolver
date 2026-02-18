@@ -967,7 +967,7 @@ const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const menuItems = [
+    const managementMenuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
     { path: "/user/upload", icon: Upload, label: t("izeAnalysis") },
     { path: "/admin/users", icon: Users, label: t("users") },
@@ -975,14 +975,22 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/branches", icon: MapPin, label: t("branchManagement") },
     { path: "/admin/pricing", icon: DollarSign, label: t("pricingManagement") },
     { path: "/admin/payments", icon: Banknote, label: t("payments") },
-    { path: "/admin/payment-settings", icon: CreditCard, label: t("paymentSettings") },
     { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
+      ];
+
+  const settingsMenuItems = [
+    { path: "/admin/payment-settings", icon: CreditCard, label: t("paymentSettings") },
     { path: "/admin/api-settings", icon: Key, label: t("apiSettings") },
     { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
     { path: "/admin/site-settings", icon: Settings, label: t("siteSettings") },
     { path: "/admin/system-logs", icon: ShieldAlert, label: t("systemLogs") },
   ];
 
+  const menuSections = [
+    { key: "management", label: t("managementSection"), items: managementMenuItems },
+    { key: "settings", label: t("settingsSection"), items: settingsMenuItems },
+  ];
+  
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -1004,10 +1012,17 @@ const AdminLayout = ({ children }) => {
 
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-4 space-y-2">
-          {menuItems.map((item) => (
-            <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
-              <item.icon className="w-4 h-4 mr-2" />{item.label}
-            </Button>
+          {menuSections.map((section) => (
+            <div key={section.key} className="space-y-1">
+              <p className="px-2 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {section.label}
+              </p>
+              {section.items.map((item) => (
+                <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                  <item.icon className="w-4 h-4 mr-2" />{item.label}
+                </Button>
+              ))}
+            </div>
           ))}
           <Separator />
           <LanguageSwitcher className="w-full justify-start" />
@@ -1038,11 +1053,20 @@ const AdminLayout = ({ children }) => {
               {sidebarOpen ? <ChevronDown className="w-4 h-4 rotate-90" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>
-          <nav className="p-4 space-y-2">
-            {menuItems.map((item) => (
-              <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
-                <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
-              </Button>
+          <nav className="p-4 space-y-4">
+            {menuSections.map((section) => (
+              <div key={section.key} className="space-y-2">
+                {sidebarOpen && (
+                  <p className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {section.label}
+                  </p>
+                )}
+                {section.items.map((item) => (
+                  <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                    <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                  </Button>
+                ))}
+              </div>
             ))}
             <Separator className="my-4" />
             {sidebarOpen && <LanguageSwitcher className="w-full justify-start" />}
