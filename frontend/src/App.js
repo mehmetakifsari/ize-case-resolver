@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation,
 import axios from "axios";
 import { 
   Upload, FileText, CheckCircle, XCircle, AlertCircle, List, Settings, Home, 
-  Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, Clock, Menu, X,
+  Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, ShieldAlert, Clock, Menu, X,
   BarChart3, Archive, ChevronDown, ChevronRight, Plus, Trash2, Edit, Eye, EyeOff,
   Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard,
   Banknote, Infinity, UserPlus, MapPin, DollarSign, Image
@@ -980,6 +980,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/api-settings", icon: Key, label: t("apiSettings") },
     { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
     { path: "/admin/site-settings", icon: Settings, label: t("siteSettings") },
+    { path: "/admin/system-logs", icon: ShieldAlert, label: t("systemLogs") },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -1190,6 +1191,113 @@ const AdminDashboard = () => {
 };
 
 // ==================== ADMIN USERS ====================
+
+const AdminSystemLogs = () => {
+  const { token } = useAuth();
+  const { t } = useLanguage();
+  const [summary, setSummary] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  const fetchLogs = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [summaryResponse, logsResponse] = await Promise.all([
+        axios.get(`${API}/admin/system-logs/summary`, { headers }),
+        axios.get(`${API}/admin/system-logs?limit=120`, { headers }),
+      ]);
+
+      setSummary(summaryResponse.data);
+      setLogs(logsResponse.data || []);
+    } catch (error) {
+      console.error("System logs yüklenemedi:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <AdminLayout><div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div></AdminLayout>;
+  }
+
+  return (
+    <AdminLayout>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("systemLogs")}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t("systemLogsDesc")}</p>
+        </div>
+        <Button variant="outline" onClick={fetchLogs}>{t("refresh")}</Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <Card><CardHeader className="pb-2"><CardDescription>{t("totalLogs")}</CardDescription></CardHeader><CardContent><div className="text-2xl font-bold">{summary?.total || 0}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("errorLogs")}</CardDescription></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{summary?.errors || 0}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("warningLogs")}</CardDescription></CardHeader><CardContent><div className="text-2xl font-bold text-yellow-600">{summary?.warnings || 0}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("securityAlerts")}</CardDescription></CardHeader><CardContent><div className="text-2xl font-bold text-orange-600">{summary?.security_alerts || 0}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("last24Hours")}</CardDescription></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{summary?.recent_24h || 0}</div></CardContent></Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">{t("topSecurityIndicators")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {(summary?.top_security_indicators || []).length === 0 && <p className="text-sm text-gray-500">-</p>}
+            {(summary?.top_security_indicators || []).map((item) => (
+              <Badge key={item.indicator} variant="outline">{item.indicator}: {item.count}</Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t("recentEvents")}</CardTitle>
+          <CardDescription>{t("recentEventsDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2 pr-3">{t("date")}</th>
+                  <th className="py-2 pr-3">{t("level")}</th>
+                  <th className="py-2 pr-3">{t("event")}</th>
+                  <th className="py-2 pr-3">{t("route")}</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log, index) => (
+                  <tr key={`${log.created_at}-${index}`} className="border-b">
+                    <td className="py-2 pr-3 whitespace-nowrap">{new Date(log.created_at).toLocaleString('tr-TR')}</td>
+                    <td className="py-2 pr-3">
+                      <Badge className={log.level === 'ERROR' ? 'bg-red-100 text-red-800' : (log.level === 'WARNING' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')}>
+                        {log.level}
+                      </Badge>
+                    </td>
+                    <td className="py-2 pr-3">{log.event_type}</td>
+                    <td className="py-2 pr-3">{log.method} {log.path}</td>
+                    <td className="py-2 pr-3">{log.status_code}</td>
+                    <td className="py-2 pr-3">{log.client_ip || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </AdminLayout>
+  );
+};
+
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -2992,6 +3100,7 @@ function App() {
               <Route path="/admin/site-settings" element={<PrivateRoute adminOnly><AdminSiteSettings /></PrivateRoute>} />
               <Route path="/admin/payments" element={<PrivateRoute adminOnly><AdminPaymentsWrapper /></PrivateRoute>} />
               <Route path="/admin/payment-settings" element={<PrivateRoute adminOnly><PaymentSettingsWrapper /></PrivateRoute>} />
+              <Route path="/admin/system-logs" element={<PrivateRoute adminOnly><AdminSystemLogs /></PrivateRoute>} />
               <Route path="/user/upload" element={<PrivateRoute><UserUpload /></PrivateRoute>} />
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
