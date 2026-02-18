@@ -1285,7 +1285,7 @@ const AdminUsers = () => {
         <div className="flex gap-2 flex-wrap">
           <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("allBranches")} /></SelectTrigger>
-            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={filter.role || "all"} onValueChange={(v) => setFilter({...filter, role: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[120px]"><SelectValue placeholder={t("allRoles")} /></SelectTrigger>
