@@ -2677,6 +2677,7 @@ const UserUpload = () => {
   const { token, user, fetchUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const Layout = user?.role === "admin" ? AdminLayout : UserLayout;
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -2697,7 +2698,7 @@ const UserUpload = () => {
   };
 
   return (
-    <UserLayout>
+    <Layout>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" data-testid="user-upload-title">{t("uploadTitle")}</h1>
         {user?.free_analyses_remaining <= 0 && (<Alert variant="destructive" className="mb-6"><AlertCircle className="h-4 w-4" /><AlertDescription>{t("noCredits")}</AlertDescription></Alert>)}
@@ -2726,7 +2727,7 @@ const UserUpload = () => {
           </form>
         </CardContent></Card>
       </div>
-    </UserLayout>
+    </Layout>
   );
 };
 
