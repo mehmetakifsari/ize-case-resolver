@@ -1444,6 +1444,8 @@ const AdminAllCases = () => {
   const archiveCase = async (caseId) => { await axios.patch(`${API}/admin/cases/${caseId}/archive`, {}, { headers: { Authorization: `Bearer ${token}` } }); fetchCases(); };
   const deleteCase = async (caseId) => { if (!window.confirm(t("deleteCaseConfirm"))) return; await axios.delete(`${API}/admin/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } }); fetchCases(); };
 
+  const BRANCHES = Array.isArray(branches) && branches.length > 0 ? branches : DEFAULT_BRANCHES;
+  
   const getDecisionBadge = (decision) => {
     const colors = { "COVERED": "bg-green-100 text-green-800", "OUT_OF_COVERAGE": "bg-red-100 text-red-800", "ADDITIONAL_INFO_REQUIRED": "bg-yellow-100 text-yellow-800" };
     return colors[decision] || "bg-gray-100 text-gray-800";
@@ -1456,7 +1458,7 @@ const AdminAllCases = () => {
         <div className="flex gap-2">
           <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("allBranches")} /></SelectTrigger>
-            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">{t("allBranches")}</SelectItem>{BRANCHES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={filter.archived || "all"} onValueChange={(v) => setFilter({...filter, archived: v === "all" ? "" : v})}>
             <SelectTrigger className="w-[120px]"><SelectValue placeholder={t("all")} /></SelectTrigger>
