@@ -1329,7 +1329,21 @@ const AdminAllCases = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchCases(); }, [filter]);
+    useEffect(() => {
+    fetchCases();
+    fetchBranches();
+  }, [filter]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/public/branches`);
+      if (response.data && response.data.length > 0) {
+        setBranches(response.data.map((b) => b.name));
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
 
   const fetchCases = async () => {
     try {
