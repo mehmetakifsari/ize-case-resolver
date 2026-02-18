@@ -114,6 +114,8 @@ export const translations = {
     paymentSettings: "Ödeme Ayarları",
     invoiceSettings: "Fatura Ayarları",
     socialMedia: "Sosyal Medya",
+    settingsSection: "Ayarlar",
+    managementSection: "Yönetim",
     
     // User Management
     userManagement: "Kullanıcı Yönetimi",
@@ -449,6 +451,8 @@ export const translations = {
     paymentSettings: "Payment Settings",
     invoiceSettings: "Invoice Settings",
     socialMedia: "Social Media",
+    settingsSection: "Settings",
+    managementSection: "Management",
     
     // User Management
     userManagement: "User Management",
