@@ -88,8 +88,7 @@ def generate_email_body(case_data: dict, language: str = "tr") -> str:
         warranty_out_text = "dışında" if not case_data.get("is_within_2_year_warranty") else "içinde"
 
         operations = case_data.get('operations_performed', [])
-        operations_text = (", ".join([str(op).strip() for op in operations if str(op).strip()])
-        if operations else "kontrol ve diagnostik işlemleri")
+        operations_text = _normalize_operations_for_tr(operations)
 
         parts = case_data.get('parts_replaced', [])
         if parts:
@@ -97,7 +96,7 @@ def generate_email_body(case_data: dict, language: str = "tr") -> str:
         else:
             parts_summary = "Onarım sürecinde herhangi bir parça değişimi yapılmamış, işlemler kontrol, diagnostik ve yazılım güncelleme kapsamında gerçekleştirilmiştir."
 
-        repair_summary = case_data.get('repair_process_summary', '').strip()
+        repair_summary = _extract_turkish_text(case_data.get('repair_process_summary', '').strip())
         repair_summary_block = f"\n\n\nDeğerlendirme özeti: {repair_summary}" if repair_summary else ""
 
         body = f"""Merhaba,
