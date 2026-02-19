@@ -28,10 +28,17 @@ def _extract_turkish_text(text: str) -> str:
     return normalized
 
 
+def _clean_operation_text(text: str) -> str:
+    """Operasyon metninin sonundaki gereksiz noktalama/boşlukları temizler."""
+    if not text:
+        return ""
+    return str(text).strip().rstrip(" .,:;!?")
+
+
 def _normalize_operations_for_tr(operations: List[str]) -> str:
     """Operasyon listesini Türkçe, akıcı cümlede kullanılacak biçime getirir."""
     cleaned_ops = [_extract_turkish_text(op) for op in operations if str(op).strip()]
-    cleaned_ops = [op for op in cleaned_ops if op]
+    cleaned_ops = [_clean_operation_text(op) for op in cleaned_ops if op]
 
     if not cleaned_ops:
         return "kontrol ve diagnostik işlemleri"
@@ -111,7 +118,7 @@ Aracınıza ait {ize_no} numaralı yurtdışı IZE dosyası incelenmiş olup yap
 
 
 
-Araç için gerçekleştirilen inceleme kapsamında {operations_text} uygulanmıştır.
+Araç için gerçekleştirilen inceleme kapsamında {operations_text} işlemi gerçekleştirilmiştir.
 
 
 
@@ -123,7 +130,7 @@ Araç için gerçekleştirilen inceleme kapsamında {operations_text} uygulanmı
 
 
 
-Bilgilerinize sunarız."""
+Bilgilerinize saygıyla sunarız."""
     else:
         # English template
         warranty_status = "Covered" if case_data.get("warranty_decision") == "COVERED" else "Out of Coverage"
