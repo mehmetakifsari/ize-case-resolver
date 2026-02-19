@@ -60,6 +60,7 @@ export const translations = {
     users: "Kullanıcılar",
     allCases: "Tüm IZE'ler",
     warrantyRules: "Garanti Kuralları",
+    contractRules: "Kontrat Kuralları",
     apiSettings: "API Ayarları",
     siteSettings: "Site Ayarları",
     systemLogs: "Sistem Logları",
@@ -286,6 +287,13 @@ export const translations = {
     extractedChars: "Çıkarılan karakter",
     ruleUploaded: "Kural başarıyla yüklendi",
     toggleActiveStatus: "Aktif/Pasif",
+    addContractPackage: "Kontrat Paketi Ekle",
+    contractPackageHelp: "Paket adını yazın, altına her satıra bir madde ekleyin.",
+    packageName: "Paket Adı",
+    packageItems: "Paket Maddeleri",
+    packageItemsPlaceholder: "- Motor yağının değiştirilmesi\n- Hava filtresinin değiştirilmesi",
+    noContractRules: "Henüz kontrat paketi eklenmemiş",
+    keywords: "Anahtar Kelimeler",
     
     // No data
     noUsers: "Kullanıcı bulunamadı",
@@ -413,6 +421,7 @@ export const translations = {
     users: "Users",
     allCases: "All Cases",
     warrantyRules: "Warranty Rules",
+    contractRules: "Contract Rules",
     apiSettings: "API Settings",
     siteSettings: "Site Settings",
     emailSettings: "Email Settings",
@@ -625,6 +634,13 @@ export const translations = {
     extractedChars: "Extracted characters",
     ruleUploaded: "Rule uploaded successfully",
     toggleActiveStatus: "Toggle Active",
+    addContractPackage: "Add Contract Package",
+    contractPackageHelp: "Set package name and add one item per line.",
+    packageName: "Package Name",
+    packageItems: "Package Items",
+    packageItemsPlaceholder: "- Change engine oil\n- Replace air filter",
+    noContractRules: "No contract package added yet",
+    keywords: "Keywords",
     
     // No data
     noUsers: "No users found",
