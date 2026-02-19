@@ -18,6 +18,7 @@ MAX_INPUT_TOKENS_BUDGET = 3000
 PRIMARY_MAX_COMPLETION_TOKENS = 700
 FALLBACK_MAX_COMPLETION_TOKENS = 400
 GEMINI_MODEL = "gemini-1.5-flash"
+OPENAI_TIMEOUT_SECONDS = float(os.environ.get("OPENAI_TIMEOUT_SECONDS", "45"))
 
 
 def _estimate_tokens(text: str) -> int:
@@ -256,7 +257,11 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
         if not openai_key and not google_key:
             raise HTTPException(status_code=500, detail="OpenAI veya Google API anahtarı bulunamadı")
 
-        openai_client = AsyncOpenAI(api_key=openai_key) if openai_key else None
+        openai_client = (
+            AsyncOpenAI(api_key=openai_key, timeout=OPENAI_TIMEOUT_SECONDS, max_retries=1)
+            if openai_key
+            else None
+        )
 
         attempts = [
             (MAX_RULES_CHARS, MAX_PROMPT_CHARS, PRIMARY_MAX_COMPLETION_TOKENS),
