@@ -1,5 +1,6 @@
 import smtplib
 import ssl
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -9,6 +10,23 @@ from database import db
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_company_name(company: str) -> str:
+    """Firma adını e-posta başlığı için sadeleştirir (ilk kelime)."""
+    if not company:
+        return "N/A"
+    return company.strip().split()[0]
+
+
+def _format_date_for_email(date_text: Optional[str]) -> str:
+    """YYYY-MM-DD tarihlerini DD.MM.YYYY formatına çevirir."""
+    if not date_text:
+        return "belirtilen"
+    try:
+        return datetime.strptime(date_text, "%Y-%m-%d").strftime("%d.%m.%Y")
+    except ValueError:
+        return date_text
 
 
 async def get_email_settings():
@@ -34,77 +52,49 @@ def generate_email_body(case_data: dict, language: str = "tr") -> str:
     """Analiz sonucu için e-posta gövdesi oluştur"""
     
     if language == "tr":
-        # Türkçe şablon
-        warranty_status = "Garanti Kapsamında" if case_data.get("warranty_decision") == "COVERED" else "Garanti Dışı"
-        within_warranty = "Evet" if case_data.get("is_within_2_year_warranty") else "Hayır"
-        
-        body = f"""Sayın Yetkili,
+        ize_no = case_data.get('ize_no', 'N/A')
+        repair_date = _format_date_for_email(case_data.get('repair_date'))
+        warranty_start_date = _format_date_for_email(case_data.get('warranty_start_date'))
+        warranty_out_text = "dışında" if not case_data.get("is_within_2_year_warranty") else "içinde"
 
-{case_data.get('ize_no', 'N/A')} numaralı IZE dosyanız analiz edilmiştir.
-
-ARAÇ BİLGİLERİ
---------------
-Firma: {case_data.get('company', 'N/A')}
-Plaka: {case_data.get('plate', 'N/A')}
-Şasi No: {case_data.get('vin', 'N/A')}
-Kilometre: {case_data.get('repair_km', 'N/A')} km
-Garanti Başlangıç: {case_data.get('warranty_start_date', 'N/A')}
-Onarım Tarihi: {case_data.get('repair_date', 'N/A')}
-
-GARANTİ DEĞERLENDİRMESİ
------------------------
-2 Yıl Garanti Süresi İçinde: {within_warranty}
-Garanti Kararı: {warranty_status}
-
-ARIZA BİLGİLERİ
----------------
-Müşteri Şikayeti: {case_data.get('failure_complaint', 'N/A')}
-Arıza Nedeni: {case_data.get('failure_cause', 'N/A')}
-
-KARAR GEREKÇELERİ
------------------
-"""
-        rationales = case_data.get('decision_rationale', [])
-        if rationales:
-            for i, rationale in enumerate(rationales, 1):
-                body += f"{i}. {rationale}\n"
-        else:
-            body += "Belirtilmemiş\n"
-
-        body += """
-YAPILAN İŞLEMLER
-----------------
-"""
         operations = case_data.get('operations_performed', [])
-        if operations:
-            for op in operations:
-                body += f"• {op}\n"
-        else:
-            body += "Belirtilmemiş\n"
+        operations_text = (", ".join([str(op).strip() for op in operations if str(op).strip()])
+                           if operations else "kontrol ve diagnostik işlemleri")
 
-        body += """
-DEĞİŞEN PARÇALAR
-----------------
-"""
         parts = case_data.get('parts_replaced', [])
         if parts:
-            for part in parts:
-                if isinstance(part, dict):
-                    body += f"• {part.get('partName', 'N/A')} - {part.get('description', '')}\n"
-                else:
-                    body += f"• {part}\n"
+            parts_summary = "Onarım sürecinde parça değişimi gerçekleştirilmiş olup işlemler ilgili parçalar üzerinden tamamlanmıştır."
         else:
-            body += "Belirtilmemiş\n"
+            parts_summary = "Onarım sürecinde herhangi bir parça değişimi yapılmamış, işlemler kontrol, diagnostik ve yazılım güncelleme kapsamında gerçekleştirilmiştir."
 
-        body += f"""
-ONARIM ÖZETİ
-------------
-{case_data.get('repair_process_summary', 'Belirtilmemiş')}
+        repair_summary = case_data.get('repair_process_summary', '').strip()
+        repair_summary_block = f"\n\n\nDeğerlendirme özeti: {repair_summary}" if repair_summary else ""
 
----
-Bu e-posta IZE Case Resolver sistemi tarafından otomatik olarak gönderilmiştir.
-Detaylı bilgi için lütfen sistem yöneticinizle iletişime geçin.
-"""
+        body = f"""Merhaba,
+
+
+
+Aracınıza ait {ize_no} numaralı yurtdışı IZE dosyası incelenmiş olup yapılan değerlendirme aşağıda bilgilerinize sunulmaktadır.
+
+
+
+İlgili aracın {warranty_start_date} tarihli teslim bilgisi ve {repair_date} tarihli onarım kaydı doğrultusunda, onarımın garanti süresi {warranty_out_text} kaldığı değerlendirilmiştir.
+
+
+
+Araç için gerçekleştirilen inceleme kapsamında {operations_text} işlemleri uygulanmıştır.
+
+
+
+{parts_summary}
+
+
+
+İlgili IZE dosyasına ait fatura tarafınıza ayrıca iletilecektir.{repair_summary_block}
+
+
+
+Bilgilerinize sunarız."""
     else:
         # English template
         warranty_status = "Covered" if case_data.get("warranty_decision") == "COVERED" else "Out of Coverage"
@@ -186,11 +176,12 @@ def generate_email_subject(case_data: dict, language: str = "tr") -> str:
     ize_no = case_data.get('ize_no', 'N/A')
     plate = case_data.get('plate', 'N/A')
     vin = case_data.get('vin', 'N/A')
+    company = _normalize_company_name(case_data.get('company', 'N/A'))
     
     if language == "tr":
-        return f"{ize_no} - {plate} - {vin} Yurtdışı IZE Dosyası Hk."
+        return f"{ize_no} - {vin} - {plate} - {company} - Yurtdışı Dosyası Hk."
     else:
-        return f"{ize_no} - {plate} - {vin} International IZE File"
+        return f"{ize_no} - {vin} - {plate} - {company} - International IZE File"
 
 
 async def send_analysis_email(
