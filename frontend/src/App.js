@@ -979,6 +979,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/pricing", icon: DollarSign, label: t("pricingManagement") },
     { path: "/admin/payments", icon: Banknote, label: t("payments") },
     { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
+    { path: "/admin/contract-rules", icon: FileText, label: t("contractRules") },
       ];
 
   const settingsMenuItems = [
@@ -1000,14 +1001,14 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Mobile Header */}
       <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <button type="button" onClick={() => navigate('/admin/dashboard')} className="flex items-center gap-2 text-left">
           {siteSettings?.site_logo_url ? (
             <img src={siteSettings.site_logo_url} alt="Logo" className="h-6 object-contain" />
           ) : (
             <FileText className="w-6 h-6 text-primary" />
           )}
           <span className="font-bold">{t("adminPanel")}</span>
-        </div>
+        </button>
         <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </Button>
@@ -1040,17 +1041,17 @@ const AdminLayout = ({ children }) => {
       )}
 
       <div className="flex">
-        <aside className={`hidden lg:block ${sidebarOpen ? 'w-64' : 'w-16'} bg-white dark:bg-gray-900 border-r min-h-screen transition-all duration-300`}>
+        <aside className={`hidden lg:block sticky top-0 h-screen overflow-y-auto ${sidebarOpen ? 'w-64' : 'w-16'} bg-white dark:bg-gray-900 border-r transition-all duration-300`}>
           <div className="p-4 border-b flex items-center justify-between">
             {sidebarOpen && (
-              <div className="flex items-center gap-2">
+              <button type="button" onClick={() => navigate('/admin/dashboard')} className="flex items-center gap-2 text-left">
                 {siteSettings?.site_logo_url ? (
                   <img src={siteSettings.site_logo_url} alt="Logo" className="h-8 object-contain" />
                 ) : (
                   <FileText className="w-8 h-8 text-primary" />
                 )}
                 <span className="font-bold">{t("adminPanel")}</span>
-              </div>
+              </button>
             )}
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <ChevronDown className="w-4 h-4 rotate-90" /> : <ChevronRight className="w-4 h-4" />}
@@ -2003,6 +2004,115 @@ const closePdfPreview = () => {
     </AdminLayout>
   );
 };
+
+
+// ==================== ADMIN CONTRACT RULES ====================
+
+const AdminContractRules = () => {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({ package_name: "", items: "", keywords: "" });
+  const { token } = useAuth();
+  const { t } = useLanguage();
+
+  useEffect(() => { fetchPackages(); }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const response = await axios.get(`${API}/contract-rules`, { headers: { Authorization: `Bearer ${token}` } });
+      setPackages(response.data);
+    } catch (error) {
+      console.error("Contract rules error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createPackage = async (e) => {
+    e.preventDefault();
+    await axios.post(`${API}/contract-rules`, {
+      package_name: formData.package_name,
+      items: formData.items.split("\n").map((i) => i.replace(/^[-•]\s*/, "").trim()).filter(Boolean),
+      keywords: formData.keywords.split(",").map((k) => k.trim()).filter(Boolean),
+    }, { headers: { Authorization: `Bearer ${token}` } });
+
+    setFormData({ package_name: "", items: "", keywords: "" });
+    fetchPackages();
+  };
+
+  const toggleActive = async (ruleId) => {
+    await axios.patch(`${API}/contract-rules/${ruleId}/toggle-active`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    fetchPackages();
+  };
+
+  const deletePackage = async (ruleId) => {
+    if (!window.confirm(t("delete") + "?")) return;
+    await axios.delete(`${API}/contract-rules/${ruleId}`, { headers: { Authorization: `Bearer ${token}` } });
+    fetchPackages();
+  };
+
+  return (
+    <AdminLayout>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">{t("contractRules")}</h1>
+      </div>
+
+      <Card className="mb-6 border-primary/30">
+        <CardHeader>
+          <CardTitle>{t("addContractPackage")}</CardTitle>
+          <CardDescription>{t("contractPackageHelp")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={createPackage} className="space-y-4">
+            <div>
+              <Label>{t("packageName")}</Label>
+              <Input value={formData.package_name} onChange={(e) => setFormData({ ...formData, package_name: e.target.value })} required />
+            </div>
+            <div>
+              <Label>{t("packageItems")}</Label>
+              <Textarea rows={8} value={formData.items} onChange={(e) => setFormData({ ...formData, items: e.target.value })} placeholder={t("packageItemsPlaceholder")} required />
+            </div>
+            <div>
+              <Label>{t("keywords")}</Label>
+              <Input value={formData.keywords} onChange={(e) => setFormData({ ...formData, keywords: e.target.value })} placeholder="bakım, motor yağı, şanzıman" />
+            </div>
+            <Button type="submit"><Plus className="w-4 h-4 mr-2" />{t("save")}</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {loading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div> : (
+        <div className="space-y-3">
+          {packages.map((pkg) => (
+            <Card key={pkg.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{pkg.package_name}</h3>
+                      <Badge variant={pkg.is_active ? "default" : "secondary"}>{pkg.is_active ? t("active") : t("inactive")}</Badge>
+                    </div>
+                    <ul className="list-disc list-inside text-sm space-y-1">
+                      {(pkg.items || []).map((item, idx) => <li key={idx}>{item}</li>)}
+                    </ul>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleActive(pkg.id)}>
+                      {pkg.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deletePackage(pkg.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {packages.length === 0 && <Card><CardContent className="p-8 text-center text-gray-500">{t("noContractRules")}</CardContent></Card>}
+        </div>
+      )}
+    </AdminLayout>
+  );
+};
+
 
 // ==================== ADMIN API SETTINGS ====================
 
