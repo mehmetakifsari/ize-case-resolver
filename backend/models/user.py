@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
-from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator, model_validator
+from typing import Optional, List, Literal
 from datetime import datetime, timezone
 import uuid
 import re
@@ -121,8 +121,17 @@ class PricingPlan(BaseModel):
     is_popular: bool = False  # Öne çıkan plan
     is_active: bool = True
     features: List[str] = []  # Özellikler listesi
-    plan_type: str = "package"  # package veya subscription
+    plan_type: Literal["package", "subscription"] = "package"  # package veya subscription
+    billing_period: Literal["one_time", "monthly", "yearly"] = "one_time"  # one_time, monthly, yearly
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @model_validator(mode="after")
+    def validate_plan_period(self):
+        if self.plan_type == "package":
+            self.billing_period = "one_time"
+        elif self.billing_period == "one_time":
+            self.billing_period = "monthly"
+        return self
 
 
 class PricingPlanCreate(BaseModel):
@@ -133,7 +142,16 @@ class PricingPlanCreate(BaseModel):
     currency: str = "TRY"
     is_popular: bool = False
     features: List[str] = []
-    plan_type: str = "package"
+    plan_type: Literal["package", "subscription"] = "package"
+    billing_period: Literal["one_time", "monthly", "yearly"] = "one_time"
+
+    @model_validator(mode="after")
+    def validate_plan_period(self):
+        if self.plan_type == "package":
+            self.billing_period = "one_time"
+        elif self.billing_period == "one_time":
+            self.billing_period = "monthly"
+        return self
 
 
 class PricingPlanUpdate(BaseModel):
@@ -145,4 +163,5 @@ class PricingPlanUpdate(BaseModel):
     is_popular: Optional[bool] = None
     is_active: Optional[bool] = None
     features: Optional[List[str]] = None
-    plan_type: Optional[str] = None
+    plan_type: Optional[Literal["package", "subscription"]] = None
+    billing_period: Optional[Literal["one_time", "monthly", "yearly"]] = None

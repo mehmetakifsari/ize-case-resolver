@@ -205,7 +205,7 @@ export const PaymentPage = ({ user, token, t, language }) => {
             {formatPrice(price)}
             {type === "subscription" && (
               <span className="text-sm font-normal text-muted-foreground">
-                /{language === "tr" ? "ay" : "mo"}
+                /{pkg.billing_period === "yearly" ? (language === "tr" ? "yıl" : "yr") : (language === "tr" ? "ay" : "mo")}
               </span>
             )}
           </div>
@@ -218,7 +218,7 @@ export const PaymentPage = ({ user, token, t, language }) => {
             {type === "credit" ? (
               <span>{pkg.credits} {language === "tr" ? "analiz kredisi" : "analysis credits"}</span>
             ) : (
-              <span>{pkg.credits_per_month} {language === "tr" ? "aylık analiz" : "monthly analyses"}</span>
+              <span>{pkg.credits_per_month || pkg.credits} {language === "tr" ? "dönem analizi" : "period analyses"}</span>
             )}
           </div>
           {type === "subscription" && pkg.features && (
