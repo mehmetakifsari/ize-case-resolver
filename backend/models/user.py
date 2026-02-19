@@ -122,6 +122,7 @@ class PricingPlan(BaseModel):
     is_active: bool = True
     features: List[str] = []  # Özellikler listesi
     plan_type: str = "package"  # package veya subscription
+    billing_period: str = "one_time"  # one_time, monthly, yearly
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -134,6 +135,7 @@ class PricingPlanCreate(BaseModel):
     is_popular: bool = False
     features: List[str] = []
     plan_type: str = "package"
+    billing_period: str = "one_time"
 
 
 class PricingPlanUpdate(BaseModel):
@@ -146,3 +148,4 @@ class PricingPlanUpdate(BaseModel):
     is_active: Optional[bool] = None
     features: Optional[List[str]] = None
     plan_type: Optional[str] = None
+    billing_period: Optional[str] = None
