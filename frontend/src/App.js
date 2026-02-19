@@ -1647,6 +1647,11 @@ const AdminRules = () => {
   const [pdfKeywords, setPdfKeywords] = useState("");
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false);
+  const [pdfPreviewError, setPdfPreviewError] = useState("");
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
+  const [pdfPreviewName, setPdfPreviewName] = useState("");
   const { token } = useAuth();
   const { t } = useLanguage();
 
@@ -1717,6 +1722,61 @@ const AdminRules = () => {
     fetchRules(); 
   };
 
+const closePdfPreview = () => {
+    setPdfPreviewOpen(false);
+    setPdfPreviewLoading(false);
+    setPdfPreviewError("");
+    setPdfPreviewName("");
+    setPdfPreviewUrl((prevUrl) => {
+      if (prevUrl) {
+        URL.revokeObjectURL(prevUrl);
+      }
+      return "";
+    });
+  };
+
+  const openPdfPreview = async (rule) => {
+    if (!rule?.id) {
+      setPdfPreviewError("PDF kaydı bulunamadı.");
+      setPdfPreviewOpen(true);
+      return;
+    }
+
+    setPdfPreviewOpen(true);
+    setPdfPreviewLoading(true);
+    setPdfPreviewError("");
+    setPdfPreviewName(rule.source_filename || `v${rule.rule_version}.pdf`);
+
+    setPdfPreviewUrl((prevUrl) => {
+      if (prevUrl) {
+        URL.revokeObjectURL(prevUrl);
+      }
+      return "";
+    });
+
+    try {
+      const response = await axios.get(`${API}/warranty-rules/${rule.id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
+      const blobUrl = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      setPdfPreviewUrl(blobUrl);
+    } catch (error) {
+      setPdfPreviewError(error.response?.data?.detail || "PDF önizleme yüklenemedi.");
+    } finally {
+      setPdfPreviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
+  
   const filteredRules = activeTab === "active" ? rules.filter(r => r.is_active) : rules;
 
   return (
