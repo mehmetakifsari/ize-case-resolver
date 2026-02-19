@@ -35,7 +35,7 @@ Değer: SUNUCU_IP_ADRESİ
 TTL: 14400
 
 Tip: A  
-Host: api.ize
+Host: api-ize
 Değer: SUNUCU_IP_ADRESİ
 TTL: 14400
 ```
@@ -45,7 +45,7 @@ TTL: 14400
 3. **Cloudflare kullanıyorsanız (turuncu bulut/proxy açık)**
    - SSL/TLS mode mutlaka **Full (strict)** olmalı
    - **Flexible kullanmayın** (Coolify/Traefik origin HTTPS ile çalıştığı için handshake bozulur)
-   - `api.ize.visupanel.com` için origin sertifikası geçerli olmalı (Coolify'da "Generate SSL Certificate" + redeploy)
+   - `api-ize.visupanel.com` için origin sertifikası geçerli olmalı (Coolify'da "Generate SSL Certificate" + redeploy)
    - Sertifika henüz hazır değilse geçici olarak DNS kaydını **DNS only (gri bulut)** yapıp testi öyle yapın
 
 4. **Cloudflare hata koduna göre teşhis**
@@ -55,9 +55,9 @@ TTL: 14400
 
 5. **Doğru doğrulama komutları (ReqBin yerine kendi terminalinizde)**
    ```bash
-   curl -Iv https://api.ize.visupanel.com/api/health
-   openssl s_client -connect api.ize.visupanel.com:443 -servername api.ize.visupanel.com </dev/null | openssl x509 -noout -issuer -subject -dates
-   nslookup api.ize.visupanel.com
+   curl -Iv https://api-ize.visupanel.com/api/health
+   openssl s_client -connect api-ize.visupanel.com:443 -servername api-ize.visupanel.com </dev/null | openssl x509 -noout -issuer -subject -dates
+   nslookup api-ize.visupanel.com
    ``
 
 **Hostinger DNS kullanıyorsanız:**
@@ -110,7 +110,7 @@ docker network create coolify
 **ÖNEMLİ:** Coolify'da her servis için domain'leri ayrı ayrı tanımlayın:
 
 1. **Backend servisi** seçin → Settings
-   - Domain: `api.ize.visupanel.com`
+   - Domain: `api-ize.visupanel.com`
    - ✅ "Generate SSL Certificate" aktif
 
 2. **Frontend servisi** seçin → Settings  
@@ -215,8 +215,8 @@ EOF
 | | |
 |---|---|
 | **Frontend URL** | https://ize.visupanel.com |
-| **API URL** | https://api.ize.visupanel.com |
-| **API Health Check** | https://api.ize.visupanel.com/api/health |
+| **API URL** | https://api-ize.visupanel.com |
+| **API Health Check** | https://api-ize.visupanel.com/api/health |
 | **Admin Email** | admin@visupanel.com |
 | **Admin Şifre** | Admin@123! (değiştirin!) |
 
@@ -230,7 +230,7 @@ EOF
    ```bash
    # DNS kontrolü
    nslookup ize.visupanel.com
-   nslookup api.ize.visupanel.com
+   nslookup api-ize.visupanel.com
    ```
 
 2. **Coolify'da SSL sertifikasını yenileyin**
@@ -269,7 +269,7 @@ docker exec -it ize-mongodb mongosh --eval "db.stats()"
 ### Backend Health Check
 
 ```bash
-curl https://api.ize.visupanel.com/api/health
+curl https://api-ize.visupanel.com/api/health
 ```
 
 ### OCR Dil Kontrolü
