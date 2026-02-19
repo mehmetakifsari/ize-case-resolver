@@ -6,7 +6,7 @@ from models.case import IZECase, IZECaseResponse
 from models.user import BRANCHES
 from services.pdf_processor import extract_text_from_pdf
 from services.ai_analyzer import analyze_ize_with_ai
-from services.email import send_analysis_email
+from services.email import send_analysis_email, generate_email_subject, generate_email_body
 from routes.auth import get_current_active_user
 from database import db
 
@@ -71,6 +71,8 @@ async def analyze_ize_pdf(
     api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
     
     analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, api_settings)
+    analysis_result["email_subject"] = generate_email_subject(analysis_result, "tr")
+    analysis_result["email_body"] = generate_email_body(analysis_result, "tr")
     
     # IZE Case oluştur
     case_title = f"{analysis_result.get('ize_no', 'N/A')} - {analysis_result.get('company', 'N/A')} - {analysis_result.get('plate', 'N/A')}"
