@@ -32,6 +32,10 @@ class IZECase(BaseModel):
     is_within_2_year_warranty: bool
     warranty_decision: str  # COVERED / OUT_OF_COVERAGE / ADDITIONAL_INFO_REQUIRED
     decision_rationale: List[str] = []
+    has_active_contract: bool = False
+    contract_package_name: Optional[str] = None
+    contract_decision: str = "NO_CONTRACT_COVERAGE"
+    contract_covered_parts: List[str] = []
     
     failure_complaint: str
     failure_cause: str
