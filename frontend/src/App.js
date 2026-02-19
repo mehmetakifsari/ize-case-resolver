@@ -380,11 +380,7 @@ const LandingPage = () => {
   const { theme, toggleTheme } = useTheme();
   const { t, siteSettings } = useLanguage();
   const navigate = useNavigate();
-
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       <nav className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
@@ -398,13 +394,20 @@ const LandingPage = () => {
               <LanguageSwitcher />
               <Button variant="ghost" size="sm" onClick={toggleTheme} data-testid="theme-toggle">
                 {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-              </Button>
-              <Button variant="ghost" onClick={() => navigate("/login")} data-testid="login-btn">
-                {t("login")}
-              </Button>
-              <Button onClick={() => navigate("/register")} data-testid="register-btn">
-                {t("register")}
-              </Button>
+              </Button>              {user ? (
+                <Button variant="ghost" onClick={() => navigate("/dashboard")} data-testid="back-to-panel-btn">
+                  {t("backToPanel")}
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => navigate("/login")} data-testid="login-btn">
+                    {t("login")}
+                  </Button>
+                  <Button onClick={() => navigate("/register")} data-testid="register-btn">
+                    {t("register")}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
