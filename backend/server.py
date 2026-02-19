@@ -28,6 +28,7 @@ from routes.auth import router as auth_router
 from routes.cases import router as cases_router
 from routes.admin import router as admin_router
 from routes.warranty import router as warranty_router
+from routes.contracts import router as contracts_router
 from routes.site_settings import router as site_settings_router
 from routes.payments import router as payments_router
 from routes.webhooks import router as webhooks_router
@@ -45,6 +46,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(cases_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(warranty_router, prefix="/api")
+app.include_router(contracts_router, prefix="/api")
 app.include_router(site_settings_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(webhooks_router, prefix="/api")
