@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-import asyncio
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
-import os
 from models.case import IZECase, IZECaseResponse
 from models.user import BRANCHES
 from services.pdf_processor import extract_text_from_pdf
@@ -14,7 +12,6 @@ from database import db
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
 logger = logging.getLogger(__name__)
-ANALYSIS_TIMEOUT_SECONDS = int(os.environ.get("ANALYSIS_TIMEOUT_SECONDS", "90"))
 
 
 @router.post("/analyze", response_model=IZECase)
@@ -73,17 +70,7 @@ async def analyze_ize_pdf(
     # Panel'deki API ayarlarını al
     api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
     
-        try:
-        analysis_result = await asyncio.wait_for(
-            analyze_ize_with_ai(extracted_text, warranty_rules, api_settings),
-            timeout=ANALYSIS_TIMEOUT_SECONDS
-        )
-    except asyncio.TimeoutError:
-        raise HTTPException(
-            status_code=504,
-            detail="Analiz zaman aşımına uğradı. Lütfen tekrar deneyin."
-        )
-        
+    analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, api_settings)        
     analysis_result["email_subject"] = generate_email_subject(analysis_result, "tr")
     analysis_result["email_body"] = generate_email_body(analysis_result, "tr")
     
