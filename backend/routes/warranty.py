@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
 from typing import List, Optional
 from datetime import datetime, timezone
 from models.warranty import (
@@ -14,6 +14,7 @@ import pytesseract
 from PIL import Image
 import io
 import uuid
+import base64
 
 router = APIRouter(prefix="/warranty-rules", tags=["Warranty Rules"])
 
@@ -114,6 +115,8 @@ async def upload_warranty_pdf(
     
     doc = rule_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
+    doc['pdf_binary'] = base64.b64encode(file_bytes).decode('utf-8')
+
     
     await db.warranty_rules.insert_one(doc)
     
@@ -128,7 +131,7 @@ async def upload_warranty_pdf(
 async def get_warranty_rules(active_only: bool = False):
     """Tüm garanti kurallarını getirir"""
     query = {"is_active": True} if active_only else {}
-    rules = await db.warranty_rules.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    rules = await db.warranty_rules.find(query, {"_id": 0, "pdf_binary": 0}).sort("created_at", -1).to_list(1000)
     
     for rule in rules:
         if isinstance(rule.get('created_at'), str):
@@ -145,7 +148,7 @@ async def get_warranty_rules(active_only: bool = False):
 @router.get("/{rule_id}", response_model=WarrantyRule)
 async def get_warranty_rule(rule_id: str):
     """Belirli bir garanti kuralını getirir"""
-    rule = await db.warranty_rules.find_one({"id": rule_id}, {"_id": 0})
+    rule = await db.warranty_rules.find_one({"id": rule_id}, {"_id": 0, "pdf_binary": 0})
     
     if not rule:
         raise HTTPException(status_code=404, detail="Kural bulunamadı")
@@ -160,6 +163,38 @@ async def get_warranty_rule(rule_id: str):
         rule['is_active'] = True
     
     return WarrantyRule(**rule)
+
+@router.get("/{rule_id}/pdf")
+async def get_warranty_rule_pdf(rule_id: str, admin: dict = Depends(get_admin_user)):
+    """PDF olarak yüklenen garanti kuralının orijinal dosyasını döndürür."""
+    rule = await db.warranty_rules.find_one(
+        {"id": rule_id},
+        {"_id": 0, "pdf_binary": 1, "source_filename": 1, "source_type": 1}
+    )
+
+    if not rule:
+        raise HTTPException(status_code=404, detail="Kural bulunamadı")
+
+    if rule.get("source_type") != "pdf":
+        raise HTTPException(status_code=400, detail="Bu kural PDF kaynağından yüklenmemiş")
+
+    pdf_binary = rule.get("pdf_binary")
+    if not pdf_binary:
+        raise HTTPException(status_code=404, detail="PDF içeriği bulunamadı")
+
+    try:
+        pdf_bytes = base64.b64decode(pdf_binary)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="PDF içeriği çözümlenemedi") from exc
+
+    filename = rule.get("source_filename") or f"warranty-rule-{rule_id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
+    )
+
+
 
 
 @router.put("/{rule_id}")
