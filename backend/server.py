@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from datetime import datetime, timezone
 import time
+from services.auth import get_password_hash
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
@@ -175,3 +176,43 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+
+@app.on_event("startup")
+async def startup_tasks():
+    """Uygulama başlangıcında temel DB hazırlıklarını yapar."""
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("id", unique=True)
+
+    bootstrap_email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "").strip().lower()
+    bootstrap_password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "").strip()
+    bootstrap_name = os.environ.get("BOOTSTRAP_ADMIN_FULL_NAME", "Sistem Yöneticisi").strip()
+
+    if not bootstrap_email or not bootstrap_password:
+        return
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    await db.users.update_one(
+        {"email": bootstrap_email},
+        {
+            "$setOnInsert": {
+                "id": os.environ.get("BOOTSTRAP_ADMIN_ID") or f"admin-{bootstrap_email}",
+                "email": bootstrap_email,
+                "full_name": bootstrap_name,
+                "phone_number": "",
+                "branch": "",
+                "role": "admin",
+                "is_active": True,
+                "is_email_verified": True,
+                "free_analyses_remaining": 9999,
+                "has_unlimited_credits": True,
+                "total_analyses": 0,
+                "emails_sent": 0,
+                "hashed_password": get_password_hash(bootstrap_password),
+                "created_at": now_iso,
+            }
+        },
+        upsert=True,
+    )
