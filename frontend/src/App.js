@@ -2257,7 +2257,7 @@ const AdminPricing = () => {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editPlan, setEditPlan] = useState(null);
-  const [formData, setFormData] = useState({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package" });
+  const [formData, setFormData] = useState({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package", billing_period: "one_time" });
   const [formLoading, setFormLoading] = useState(false);
   const { token } = useAuth();
   const { t } = useLanguage();
@@ -2287,7 +2287,7 @@ const AdminPricing = () => {
       }
       setShowAdd(false);
       setEditPlan(null);
-      setFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package" });
+      etFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package", billing_period: "one_time" });
       fetchPlans();
     } catch (error) {
       alert(error.response?.data?.detail || t("error"));
@@ -2304,22 +2304,34 @@ const AdminPricing = () => {
 
   const openEdit = (plan) => {
     setEditPlan(plan);
-    setFormData({ ...plan, features: plan.features?.join("\n") || "" });
+     setFormData({ ...plan, billing_period: plan.billing_period || (plan.plan_type === "subscription" ? "monthly" : "one_time"), features: plan.features?.join("\n") || "" });
     setShowAdd(true);
   };
+
+  const packagePlans = plans.filter((plan) => plan.plan_type !== "subscription");
+  const subscriptionPlans = plans.filter((plan) => plan.plan_type === "subscription");
+  const getBillingPeriodLabel = (period) => {
+    if (period === "yearly") return "Yearly";
+    if (period === "monthly") return "Monthly";
+    return "One-time";
+  };
+
 
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold">{t("pricingManagement")}</h1>
-        <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setEditPlan(null); setFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package" }); } }}>
+        <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setEditPlan(null); setFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package", billing_period: "one_time" }); } }}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />{t("addPlan")}</Button></DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader><DialogTitle>{editPlan ? t("editPlan") : t("addPlan")}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><Label>{t("planName")}</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>{t("planCredits")}</Label><Input type="number" min="1" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value) || 0})} required /></div>
+                <div>
+                  <Label>{formData.plan_type === "subscription" ? "Dönem Kredisi / Period Credits" : t("planCredits")}</Label>
+                  <Input type="number" min="1" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value) || 0})} required />
+                </div>
                 <div><Label>{t("planPrice")}</Label><Input type="number" min="0" step="0.01" value={formData.price} onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})} required /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2330,12 +2342,24 @@ const AdminPricing = () => {
                   </Select>
                 </div>
                 <div><Label>{t("planType")}</Label>
-                  <Select value={formData.plan_type} onValueChange={(v) => setFormData({...formData, plan_type: v})}>
+                  <Select value={formData.plan_type} onValueChange={(v) => setFormData({...formData, plan_type: v, billing_period: v === "subscription" ? "monthly" : "one_time"})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="package">{t("package")}</SelectItem><SelectItem value="subscription">{t("subscription")}</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>
+              {formData.plan_type === "subscription" && (
+                <div>
+                  <Label>{"Fatura Dönemi / Billing Period"}</Label>
+                  <Select value={formData.billing_period} onValueChange={(v) => setFormData({...formData, billing_period: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">{"Aylık (Monthly)"}</SelectItem>
+                      <SelectItem value="yearly">{"Yıllık (Yearly)"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div><Label>{t("planFeatures")}</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} placeholder={t("planFeaturesHelp")} rows={4} /></div>
               <div className="flex items-center gap-2"><Switch checked={formData.is_popular} onCheckedChange={(v) => setFormData({...formData, is_popular: v})} /><Label>{t("isPopular")}</Label></div>
               <DialogFooter><Button type="submit" disabled={formLoading}>{formLoading ? t("loading") : t("save")}</Button></DialogFooter>
@@ -2345,31 +2369,68 @@ const AdminPricing = () => {
       </div>
 
       {loading ? <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div> : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {plans.map(plan => (
-            <Card key={plan.id} className={plan.is_popular ? "border-primary" : ""}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  {plan.is_popular && <Badge className="bg-primary">{t("mostPopular")}</Badge>}
-                </div>
-                <CardDescription>{plan.credits} {t("credit")} - {plan.plan_type === "subscription" ? t("subscription") : t("package")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold mb-4">{plan.price} {plan.currency === "TRY" ? "₺" : plan.currency === "USD" ? "$" : "€"}</div>
-                {plan.features && plan.features.length > 0 && (
-                  <ul className="text-sm text-gray-500 space-y-1 mb-4">
-                    {plan.features.map((f, i) => <li key={i} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" />{f}</li>)}
-                  </ul>
-                )}
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(plan)}><Edit className="w-4 h-4 mr-1" />{t("edit")}</Button>
-                  <Button size="sm" variant="destructive" onClick={() => deletePlan(plan.id)}><Trash2 className="w-4 h-4" /></Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {plans.length === 0 && <Card className="col-span-full"><CardContent className="p-8 text-center text-gray-500">{t("noPlans")}</CardContent></Card>}
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-semibold mb-3">{t("package")}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {packagePlans.map(plan => (
+                <Card key={plan.id} className={plan.is_popular ? "border-primary" : ""}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      {plan.is_popular && <Badge className="bg-primary">{t("mostPopular")}</Badge>}
+                    </div>
+                    <CardDescription>{plan.credits} {t("credit")} - {t("package")}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold mb-4">{plan.price} {plan.currency === "TRY" ? "₺" : plan.currency === "USD" ? "$" : "€"}</div>
+                    {plan.features && plan.features.length > 0 && (
+                      <ul className="text-sm text-gray-500 space-y-1 mb-4">
+                        {plan.features.map((f, i) => <li key={i} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" />{f}</li>)}
+                      </ul>
+                    )}
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(plan)}><Edit className="w-4 h-4 mr-1" />{t("edit")}</Button>
+                      <Button size="sm" variant="destructive" onClick={() => deletePlan(plan.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {packagePlans.length === 0 && <Card className="col-span-full"><CardContent className="p-8 text-center text-gray-500">Paket bulunamadı</CardContent></Card>}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-3">{t("subscription")}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {subscriptionPlans.map(plan => (
+                <Card key={plan.id} className={plan.is_popular ? "border-primary" : ""}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      {plan.is_popular && <Badge className="bg-primary">{t("mostPopular")}</Badge>}
+                    </div>
+                    <CardDescription>{plan.credits} kredi - {getBillingPeriodLabel(plan.billing_period || "monthly")}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold mb-4">{plan.price} {plan.currency === "TRY" ? "₺" : plan.currency === "USD" ? "$" : "€"}</div>
+                    {plan.features && plan.features.length > 0 && (
+                      <ul className="text-sm text-gray-500 space-y-1 mb-4">
+                        {plan.features.map((f, i) => <li key={i} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" />{f}</li>)}
+                      </ul>
+                    )}
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(plan)}><Edit className="w-4 h-4 mr-1" />{t("edit")}</Button>
+                      <Button size="sm" variant="destructive" onClick={() => deletePlan(plan.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {subscriptionPlans.length === 0 && <Card className="col-span-full"><CardContent className="p-8 text-center text-gray-500">Abonelik planı bulunamadı</CardContent></Card>}
+            </div>
+          </div>
+
+          {plans.length === 0 && <Card><CardContent className="p-8 text-center text-gray-500">{t("noPlans")}</CardContent></Card>}
         </div>
       )}
     </AdminLayout>
