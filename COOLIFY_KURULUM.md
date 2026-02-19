@@ -151,6 +151,22 @@ openssl rand -hex 32
 2. Build loglarını takip edin (~5-10 dakika)
 3. Tüm servisler yeşil olduğunda hazır!
 
+### 💾 Kalıcı MongoDB Volume Kontrolü (ÇOK ÖNEMLİ)
+
+Sunucu reboot olduğunda kullanıcılar ve panel şifreleri siliniyorsa MongoDB kalıcı disk mount edilmemiştir.
+
+Coolify'da `mongodb` servisi için:
+- **Persistent Storage / Volume** aktif olmalı
+- Container path: `/data/db`
+- Volume adı örnek: `mongodb_data`
+
+Doğrulama komutu:
+```bash
+docker inspect ize-mongodb --format '{{json .Mounts}}'
+```
+Çıktıda `/data/db` için bir volume görmelisiniz.
+
+
 **İlk deploy'da SSL sertifikası alınması 1-2 dakika sürebilir.**
 
 ---
