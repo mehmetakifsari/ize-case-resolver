@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from typing import List, Optional
 from datetime import datetime, timezone
 import os
@@ -90,23 +90,77 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
     }
 
 
-@router.get("/system-logs")
-async def get_system_logs(
-    level: Optional[str] = None,
-    event_type: Optional[str] = None,
-    limit: int = 100,
-    admin: dict = Depends(get_admin_user)
-):
-    """Sistem loglarını filtreli listele (Sadece admin)"""
+def build_system_log_query(level: Optional[str], event_type: Optional[str], search: Optional[str]):
     query = {}
     if level:
         query["level"] = level.upper()
     if event_type:
         query["event_type"] = event_type
+    if search:
+        query["$or"] = [
+            {"path": {"$regex": search, "$options": "i"}},
+            {"method": {"$regex": search, "$options": "i"}},
+            {"client_ip": {"$regex": search, "$options": "i"}},
+            {"user_agent": {"$regex": search, "$options": "i"}},
+        ]
+    return query
 
-    safe_limit = max(1, min(limit, 300))
-    logs = await db.system_logs.find(query, {"_id": 0}).sort("created_at", -1).to_list(safe_limit)
-    return logs
+
+@router.get("/system-logs")
+async def get_system_logs(
+    level: Optional[str] = None,
+    event_type: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(100, ge=1, le=250),
+    admin: dict = Depends(get_admin_user)
+):
+    """Sistem loglarını filtreli ve sayfalı listele (Sadece admin)"""
+    query = build_system_log_query(level, event_type, search)
+
+    skip = (page - 1) * page_size
+    total = await db.system_logs.count_documents(query)
+    logs = await db.system_logs.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(page_size).to_list(page_size)
+
+    return {
+        "items": logs,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": max((total + page_size - 1) // page_size, 1),
+        }
+    }
+
+
+@router.get("/system-logs/export")
+async def export_system_logs(
+    level: Optional[str] = None,
+    event_type: Optional[str] = None,
+    search: Optional[str] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """Sistem loglarını txt olarak dışa aktar"""
+    query = build_system_log_query(level, event_type, search)
+    logs = await db.system_logs.find(query, {"_id": 0}).sort("created_at", -1).limit(2000).to_list(2000)
+
+    lines = []
+    for log in logs:
+        indicators = ", ".join(log.get("security_indicators", [])) or "-"
+        line = (
+            f"[{log.get('created_at', '-')}] {log.get('level', '-')} {log.get('event_type', '-')} "
+            f"{log.get('method', '-')} {log.get('path', '-')} "
+            f"status={log.get('status_code', '-')} ip={log.get('client_ip', '-')} "
+            f"indicators={indicators}"
+        )
+        lines.append(line)
+
+    content = "\n".join(lines) if lines else "Kayıt bulunamadı"
+    return {
+        "filename": f"system-logs-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.txt",
+        "content": content,
+        "count": len(logs),
+    }
 
 
 @router.get("/system-logs/summary")
@@ -143,6 +197,8 @@ async def get_system_logs_summary(admin: dict = Depends(get_admin_user)):
         "top_paths": [{"path": item.get("_id") or "-", "count": item.get("count", 0)} for item in top_paths],
         "top_security_indicators": [{"indicator": item.get("_id"), "count": item.get("count", 0)} for item in top_security_indicators],
     }
+
+
 
 
 
