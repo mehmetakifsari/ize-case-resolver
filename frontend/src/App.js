@@ -3184,6 +3184,15 @@ const CaseDetail = () => {
             {expandedSections.warranty && (
               <CardContent className="space-y-4">
                 <div><span className="text-gray-500">{t("withinWarranty")}:</span> {caseData.is_within_2_year_warranty ? <Badge className="bg-green-100 text-green-800">{t("yes")}</Badge> : <Badge className="bg-red-100 text-red-800">{t("no")}</Badge>}</div>
+                <div><span className="text-gray-500">{t("contractRules")}:</span> {caseData.has_active_contract ? <Badge className="bg-blue-100 text-blue-800">{caseData.contract_package_name || t("yes")}</Badge> : <Badge className="bg-gray-100 text-gray-700">{t("no")}</Badge>}</div>
+                {caseData.contract_decision === "CONTRACT_COVERED" && (
+                  <div>
+                    <span className="text-gray-500 block mb-2">Kontrat Kapsamındaki Parçalar:</span>
+                    <ul className="list-disc list-inside space-y-1">
+                      {(caseData.contract_covered_parts || []).map((part, i) => <li key={i}>{part}</li>)}
+                    </ul>
+                  </div>
+                )}
                 {caseData.decision_rationale?.length > 0 && (
                   <div>
                     <span className="text-gray-500 block mb-2">{t("decisionRationale")}:</span>
@@ -3418,6 +3427,7 @@ function App() {
               <Route path="/admin/branches" element={<PrivateRoute adminOnly><AdminBranches /></PrivateRoute>} />
               <Route path="/admin/pricing" element={<PrivateRoute adminOnly><AdminPricing /></PrivateRoute>} />
               <Route path="/admin/rules" element={<PrivateRoute adminOnly><AdminRules /></PrivateRoute>} />
+              <Route path="/admin/contract-rules" element={<PrivateRoute adminOnly><AdminContractRules /></PrivateRoute>} />
               <Route path="/admin/api-settings" element={<PrivateRoute adminOnly><AdminAPISettings /></PrivateRoute>} />
               <Route path="/admin/email-settings" element={<PrivateRoute adminOnly><AdminEmailSettings /></PrivateRoute>} />
               <Route path="/admin/site-settings" element={<PrivateRoute adminOnly><AdminSiteSettings /></PrivateRoute>} />
