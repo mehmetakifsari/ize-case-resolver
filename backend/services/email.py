@@ -12,6 +12,36 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _extract_turkish_text(text: str) -> str:
+    """"Original: ... | TR: ..." formatından yalnızca TR kısmını döndürür."""
+    if not text:
+        return ""
+
+    normalized = str(text).strip()
+    tr_marker = "| TR:"
+    if tr_marker in normalized:
+        return normalized.split(tr_marker, 1)[1].strip()
+
+    if normalized.startswith("TR:"):
+        return normalized[3:].strip()
+
+    return normalized
+
+
+def _normalize_operations_for_tr(operations: List[str]) -> str:
+    """Operasyon listesini Türkçe, akıcı cümlede kullanılacak biçime getirir."""
+    cleaned_ops = [_extract_turkish_text(op) for op in operations if str(op).strip()]
+    cleaned_ops = [op for op in cleaned_ops if op]
+
+    if not cleaned_ops:
+        return "kontrol ve diagnostik işlemleri"
+
+    if len(cleaned_ops) == 1:
+        return cleaned_ops[0]
+
+    return ", ".join(cleaned_ops[:-1]) + " ve " + cleaned_ops[-1]
+
+
 def _normalize_company_name(company: str) -> str:
     """Firma adını e-posta başlığı için sadeleştirir (ilk kelime)."""
     if not company:
@@ -59,7 +89,7 @@ def generate_email_body(case_data: dict, language: str = "tr") -> str:
 
         operations = case_data.get('operations_performed', [])
         operations_text = (", ".join([str(op).strip() for op in operations if str(op).strip()])
-                           if operations else "kontrol ve diagnostik işlemleri")
+        if operations else "kontrol ve diagnostik işlemleri")
 
         parts = case_data.get('parts_replaced', [])
         if parts:
@@ -82,7 +112,7 @@ Aracınıza ait {ize_no} numaralı yurtdışı IZE dosyası incelenmiş olup yap
 
 
 
-Araç için gerçekleştirilen inceleme kapsamında {operations_text} işlemleri uygulanmıştır.
+Araç için gerçekleştirilen inceleme kapsamında {operations_text} uygulanmıştır.
 
 
 
