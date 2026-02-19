@@ -127,6 +127,7 @@ def _select_relevant_rules(warranty_rules: List[Dict[str, Any]], pdf_text: str) 
 
 def _build_messages(
     warranty_rules: List[Dict[str, Any]],
+    contract_rules: List[Dict[str, Any]],
     pdf_text: str,
     rules_limit: int,
     pdf_limit: int,
@@ -137,6 +138,14 @@ def _build_messages(
         for rule in selected_rules
     ])
     rules_text = _trim_text(rules_text, rules_limit)
+
+    contract_text = "\n\n".join([
+        f"Paket: {rule.get('package_name', 'N/A')}\nMaddeler: {'; '.join(rule.get('items', []))}\nAnahtar: {', '.join(rule.get('keywords', []))}"
+        for rule in contract_rules[:5]
+    ])
+    contract_text = _trim_text(contract_text, 800)
+
+    
     compact_pdf_text = _prioritize_pdf_lines(pdf_text, pdf_limit)
 
     system_message = (
@@ -151,6 +160,9 @@ IZE ANALİZ
 
 KURALLAR:
 {rules_text}
+
+KONTRAT PAKETLERİ (garanti uzatımı):
+{contract_text}
 
 PDF ÖZETİ:
 {compact_pdf_text}
@@ -169,6 +181,10 @@ JSON şeması:
   "is_within_2_year_warranty": false,
   "warranty_decision": "COVERED|OUT_OF_COVERAGE|ADDITIONAL_INFO_REQUIRED",
   "decision_rationale": [""],
+  "has_active_contract": false,
+  "contract_package_name": "string veya null",
+  "contract_decision": "CONTRACT_COVERED|NO_CONTRACT_COVERAGE",
+  "contract_covered_parts": [""],
   "failure_complaint": "",
   "failure_cause": "",
   "operations_performed": [""],
@@ -186,6 +202,10 @@ JSON şeması:
 
 
 Sadece JSON ver.
+
+KONTRAT KARAR KURALI:
+- Araç 2 yıl garantide değilse ama aktif kontrat paketi ile değişen parçalar eşleşiyorsa has_active_contract=true, contract_decision=CONTRACT_COVERED yap.
+- Eşleşen parça adlarını contract_covered_parts içine ekle.
 """
 
     return system_message, prompt
@@ -242,7 +262,7 @@ async def _analyze_with_gemini(
     return json.loads(clean_text)
 
 
-async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]], db_settings: Dict[str, Any] = None) -> Dict[str, Any]:
+async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]], contract_rules: List[Dict[str, Any]] = None, db_settings: Dict[str, Any] = None) -> Dict[str, Any]:
     """IZE dosyasını OpenAI (öncelikli) veya Gemini (fallback/alternatif) ile analiz eder."""
     try:
         openai_key = db_settings.get("openai_key") if db_settings else None
@@ -269,6 +289,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
         for idx, (rules_limit, pdf_limit, completion_tokens) in enumerate(attempts, 1):
             system_message, prompt = _build_messages(
                 warranty_rules=warranty_rules,
+                contract_rules=contract_rules or [],
                 pdf_text=pdf_text,
                 rules_limit=rules_limit,
                 pdf_limit=pdf_limit,
