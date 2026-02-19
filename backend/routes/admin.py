@@ -568,6 +568,8 @@ async def get_pricing_plans(admin: dict = Depends(get_admin_user)):
             PricingPlan(name="Başlangıç", credits=10, price=100, currency="TRY", features=["10 IZE Analizi", "E-posta Desteği"]),
             PricingPlan(name="Pro", credits=50, price=400, currency="TRY", is_popular=True, features=["50 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"]),
             PricingPlan(name="Enterprise", credits=200, price=1200, currency="TRY", features=["200 IZE Analizi", "7/24 Destek", "Özel Entegrasyon", "API Erişimi"]),
+            PricingPlan(name="Abonelik Basic", credits=20, price=299, currency="TRY", plan_type="subscription", billing_period="monthly", features=["Aylık 20 IZE Analizi", "Öncelikli Destek"]),
+            PricingPlan(name="Abonelik Pro", credits=300, price=2990, currency="TRY", is_popular=True, plan_type="subscription", billing_period="yearly", features=["Yıllık 300 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"]),
         ]
         for plan in default_plans:
             plan_dict = plan.model_dump()
