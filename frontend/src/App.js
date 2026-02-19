@@ -1888,6 +1888,16 @@ const AdminRules = () => {
                     )}
                   </div>
                   <div className="flex gap-2">
+                    {rule.source_type === "pdf" && rule.source_filename && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openPdfPreview(rule)}
+                        title="PDF Gör"
+                      >
+                        <FileText className="w-4 h-4 mr-1" />PDF Gör
+                      </Button>
+                    )}
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -1911,6 +1921,25 @@ const AdminRules = () => {
           )}
         </div>
       )}
+      <Dialog open={pdfPreviewOpen} onOpenChange={(open) => !open && closePdfPreview()}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[88vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-left">{pdfPreviewName || "Garanti PDF Önizleme"}</DialogTitle>
+            <DialogDescription className="text-left">Garanti kuralı PDF dosyası sayfa içinde görüntüleniyor.</DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6 flex-1 h-full min-h-0">
+            {pdfPreviewLoading ? (
+              <div className="h-full flex items-center justify-center text-sm text-gray-500">PDF yükleniyor...</div>
+            ) : pdfPreviewError ? (
+              <Alert variant="destructive"><AlertDescription>{pdfPreviewError}</AlertDescription></Alert>
+            ) : pdfPreviewUrl ? (
+              <iframe title="Warranty PDF Preview" src={pdfPreviewUrl} className="w-full h-full rounded-md border" />
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-gray-500">PDF bulunamadı.</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
