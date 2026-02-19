@@ -1,6 +1,8 @@
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
+from pymongo import MongoClient
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongodb:27017")
+DB_NAME = os.getenv("DB_NAME", "ize_database")
+
+client = MongoClient(MONGO_URL)
+db = client[DB_NAME]
