@@ -63,6 +63,11 @@ async def analyze_ize_pdf(
             'rule_text': "2 yıl içindeki araçlar garanti kapsamındadır. Üretim hatalarından kaynaklanan arızalar garanti kapsamındadır.",
             'keywords': ["garanti", "warranty", "2 yıl", "üretim hatası"]
         }]
+
+    contract_rules = await db.contract_rules.find(
+        {"is_active": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)    
     
     # AI ile analiz et
     logger.info("AI analizi başlatılıyor...")
@@ -70,7 +75,7 @@ async def analyze_ize_pdf(
     # Panel'deki API ayarlarını al
     api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
     
-    analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, api_settings)        
+    analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, contract_rules, api_settings)
     analysis_result["email_subject"] = generate_email_subject(analysis_result, "tr")
     analysis_result["email_body"] = generate_email_body(analysis_result, "tr")
     
@@ -96,6 +101,10 @@ async def analyze_ize_pdf(
         is_within_2_year_warranty=analysis_result.get('is_within_2_year_warranty', False),
         warranty_decision=analysis_result.get('warranty_decision', 'ADDITIONAL_INFO_REQUIRED'),
         decision_rationale=analysis_result.get('decision_rationale', []),
+        has_active_contract=analysis_result.get('has_active_contract', False),
+        contract_package_name=analysis_result.get('contract_package_name'),
+        contract_decision=analysis_result.get('contract_decision', 'NO_CONTRACT_COVERAGE'),
+        contract_covered_parts=analysis_result.get('contract_covered_parts', []),
         failure_complaint=analysis_result.get('failure_complaint', ''),
         failure_cause=analysis_result.get('failure_cause', ''),
         operations_performed=analysis_result.get('operations_performed', []),
