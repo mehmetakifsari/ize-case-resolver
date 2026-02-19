@@ -21,6 +21,7 @@ export const translations = {
     
     // Auth
     login: "Giriş Yap",
+    backToPanel: "Panele Geri Dön",
     logout: "Çıkış Yap",
     register: "Kayıt Ol",
     email: "E-posta",
@@ -373,6 +374,7 @@ export const translations = {
     
     // Auth
     login: "Login",
+    backToPanel: "Back to Panel",
     logout: "Logout",
     register: "Register",
     email: "Email",
