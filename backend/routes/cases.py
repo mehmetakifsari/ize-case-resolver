@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from typing import List, Optional
 from datetime import datetime, timezone
+from pathlib import Path
 import logging
+import uuid
 from models.case import IZECase, IZECaseResponse
 from models.user import BRANCHES
 from services.pdf_processor import extract_text_from_pdf
@@ -13,6 +16,8 @@ from database import db
 router = APIRouter(prefix="/cases", tags=["Cases"])
 logger = logging.getLogger(__name__)
 
+PDF_UPLOAD_DIR = Path(__file__).parent.parent / "uploads" / "ize_pdfs"
+PDF_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/analyze", response_model=IZECase)
 async def analyze_ize_pdf(
@@ -42,6 +47,11 @@ async def analyze_ize_pdf(
     
     # PDF'i oku
     pdf_content = await file.read()
+
+    pdf_storage_name = f"{uuid.uuid4().hex}.pdf"
+    pdf_storage_path = PDF_UPLOAD_DIR / pdf_storage_name
+    with open(pdf_storage_path, "wb") as pdf_handle:
+        pdf_handle.write(pdf_content)
     
     # Metni çıkar
     logger.info(f"PDF okunuyor: {file.filename} (User: {current_user['email']})")
@@ -113,6 +123,7 @@ async def analyze_ize_pdf(
         email_subject=analysis_result.get('email_subject', ''),
         email_body=analysis_result.get('email_body', ''),
         pdf_file_name=file.filename,
+        pdf_storage_name=pdf_storage_name,
         extracted_text=extracted_text[:2000],
         binder_version_used=warranty_rules[0].get('rule_version', 'default') if warranty_rules else "default",
         month=created_at.month,
@@ -224,6 +235,33 @@ async def get_case_by_id(case_id: str, current_user: dict = Depends(get_current_
         case['created_at'] = datetime.fromisoformat(case['created_at'])
     
     return IZECase(**case)
+
+@router.get("/{case_id}/pdf")
+async def get_case_pdf(case_id: str, current_user: dict = Depends(get_current_active_user)):
+    """Yüklenen IZE PDF dosyasını indirir/sekmede açar."""
+    case = await db.ize_cases.find_one({"id": case_id}, {"_id": 0})
+
+    if not case:
+        raise HTTPException(status_code=404, detail="Case bulunamadı")
+
+    if current_user['role'] != 'admin' and case.get('user_id') != current_user['id']:
+        raise HTTPException(status_code=403, detail="Bu case'i görme yetkiniz yok")
+
+    pdf_storage_name = case.get("pdf_storage_name")
+    if not pdf_storage_name:
+        raise HTTPException(status_code=404, detail="Bu case için PDF dosyası bulunamadı")
+
+    pdf_path = (PDF_UPLOAD_DIR / pdf_storage_name).resolve()
+    if not pdf_path.exists() or pdf_path.parent != PDF_UPLOAD_DIR.resolve():
+        raise HTTPException(status_code=404, detail="PDF dosyası sistemde bulunamadı")
+
+    return FileResponse(
+        path=pdf_path,
+        media_type="application/pdf",
+        filename=case.get("pdf_file_name") or "ize.pdf",
+        headers={"Content-Disposition": f'inline; filename="{case.get("pdf_file_name") or "ize.pdf"}"'}
+    )
+
 
 
 @router.delete("/{case_id}")
