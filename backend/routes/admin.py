@@ -90,6 +90,100 @@ async def get_analytics(admin: dict = Depends(get_admin_user)):
     }
 
 
+@router.get("/ai-analytics")
+async def get_ai_analytics(
+    provider: Optional[str] = Query(None),
+    days: int = Query(30, ge=1, le=365),
+    admin: dict = Depends(get_admin_user)
+):
+    """AI sağlayıcılarına göre kullanım ve maliyet analitiği"""
+    from datetime import timedelta
+
+    providers = [
+        "openai",
+        "google_gemini",
+        "emergent",
+        "anthropic_claude",
+        "other",
+    ]
+
+    start_date = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    base_match = {"created_at": {"$gte": start_date}}
+
+    if provider and provider != "all":
+        base_match["ai_provider"] = provider
+
+    provider_pipeline = [
+        {"$match": base_match},
+        {
+            "$group": {
+                "_id": {"$ifNull": ["$ai_provider", "other"]},
+                "total_queries": {"$sum": 1},
+                "total_tokens": {"$sum": {"$ifNull": ["$ai_total_tokens", 0]}},
+                "total_cost_usd": {"$sum": {"$ifNull": ["$ai_estimated_cost_usd", 0]}},
+            }
+        },
+    ]
+
+    by_provider_raw = await db.ize_cases.aggregate(provider_pipeline).to_list(20)
+    by_provider = {item["_id"]: item for item in by_provider_raw}
+
+    provider_cards = {}
+    for item in providers:
+        stats = by_provider.get(item, {})
+        provider_cards[item] = {
+            "total_queries": stats.get("total_queries", 0),
+            "total_tokens": stats.get("total_tokens", 0),
+            "total_cost_usd": round(stats.get("total_cost_usd", 0), 6),
+        }
+
+    trend_pipeline = [
+        {"$match": base_match},
+        {
+            "$group": {
+                "_id": {"$substr": ["$created_at", 0, 10]},
+                "queries": {"$sum": 1},
+                "tokens": {"$sum": {"$ifNull": ["$ai_total_tokens", 0]}},
+                "cost_usd": {"$sum": {"$ifNull": ["$ai_estimated_cost_usd", 0]}},
+            }
+        },
+        {"$sort": {"_id": 1}},
+    ]
+    trend_raw = await db.ize_cases.aggregate(trend_pipeline).to_list(400)
+
+    api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0}) or {}
+    configured = {
+        "openai": bool(api_settings.get("openai_key")),
+        "google_gemini": bool(api_settings.get("google_key")),
+        "emergent": bool(api_settings.get("emergent_key")),
+        "anthropic_claude": bool(api_settings.get("anthropic_key")),
+        "other": bool(api_settings.get("other_keys")),
+    }
+
+    totals = {
+        "queries": sum(item["total_queries"] for item in provider_cards.values()),
+        "tokens": sum(item["total_tokens"] for item in provider_cards.values()),
+        "cost_usd": round(sum(item["total_cost_usd"] for item in provider_cards.values()), 6),
+    }
+
+    return {
+        "provider": provider or "all",
+        "days": days,
+        "totals": totals,
+        "providers": provider_cards,
+        "configured": configured,
+        "trend": [
+            {
+                "date": item["_id"],
+                "queries": item.get("queries", 0),
+                "tokens": item.get("tokens", 0),
+                "cost_usd": round(item.get("cost_usd", 0), 6),
+            }
+            for item in trend_raw
+        ],
+    }
+
+
 def build_system_log_query(level: Optional[str], event_type: Optional[str], search: Optional[str]):
     query = {}
     if level:
