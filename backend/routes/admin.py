@@ -200,8 +200,6 @@ async def get_system_logs_summary(admin: dict = Depends(get_admin_user)):
 
 
 
-
-
 # ==================== USER MANAGEMENT ====================
 
 @router.get("/users")
