@@ -3258,6 +3258,10 @@ const UserCases = () => {
 const CaseDetail = () => {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [pdfObjectUrl, setPdfObjectUrl] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState("");
   const [expandedSections, setExpandedSections] = useState({ vehicle: true, warranty: true, operations: false, email: false });
   const { token, user } = useAuth();
   const { t } = useLanguage();
@@ -3270,20 +3274,49 @@ const CaseDetail = () => {
     try { const response = await axios.get(`${API}/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } }); setCaseData(response.data); } catch (error) { navigate("/dashboard"); } finally { setLoading(false); }
   };
 
-  const openUploadedPdf = async () => {
+    const openPdfModal = async () => {
+    setIsPdfModalOpen(true);
+    setPdfLoading(true);
+    setPdfError("");
+
+    if (pdfObjectUrl) {
+      URL.revokeObjectURL(pdfObjectUrl);
+      setPdfObjectUrl("");
+    }
+
     try {
       const response = await axios.get(`${API}/cases/${caseId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob"
       });
       const fileUrl = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-      window.open(fileUrl, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(fileUrl), 60_000);
+      setPdfObjectUrl(fileUrl);
     } catch (error) {
       console.error("PDF açılamadı:", error);
+      setPdfError(t("error"));
+    } finally {
+      setPdfLoading(false);
     }
   };
-                                                             
+
+  const closePdfModal = () => {
+    setIsPdfModalOpen(false);
+    setPdfLoading(false);
+    setPdfError("");
+    if (pdfObjectUrl) {
+      URL.revokeObjectURL(pdfObjectUrl);
+      setPdfObjectUrl("");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pdfObjectUrl) {
+        URL.revokeObjectURL(pdfObjectUrl);
+      }
+    };
+  }, [pdfObjectUrl]);
+                                                     
   const toggleSection = (section) => { setExpandedSections(prev => ({...prev, [section]: !prev[section]})); };
   const parseBilingualText = (value) => {
     if (!value || typeof value !== "string") return null;
@@ -3328,9 +3361,17 @@ const CaseDetail = () => {
     <Layout>
       <div className="max-w-4xl mx-auto">
         <Button variant="ghost" className="mb-4" onClick={() => navigate(-1)}>&larr; {t("back")}</Button>
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold" data-testid="case-detail-title">{caseData.case_title}</h1>
-          <p className="text-gray-500">IZE No: {caseData.ize_no}</p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold" data-testid="case-detail-title">{caseData.case_title}</h1>
+            <p className="text-gray-500">IZE No: {caseData.ize_no}</p>
+          </div>
+          {caseData.pdf_file_name && (
+            <Button variant="outline" onClick={openPdfModal} className="shrink-0">
+              <Eye className="w-4 h-4 mr-2" />
+              {t("pdf")} {t("view")}
+            </Button>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -3422,21 +3463,6 @@ const CaseDetail = () => {
               </CardContent>
             )}
           </Card>
-
-          {caseData.pdf_file_name && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("pdf")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">{caseData.pdf_file_name}</p>
-                <Button variant="outline" onClick={openUploadedPdf}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  {t("view")}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
                                                      
           <Card>
             <CardHeader className="cursor-pointer" onClick={() => toggleSection('email')}>
@@ -3451,6 +3477,28 @@ const CaseDetail = () => {
             )}
           </Card>
         </div>
+
+        <Dialog open={isPdfModalOpen} onOpenChange={(open) => (!open ? closePdfModal() : setIsPdfModalOpen(true))}>
+          <DialogContent className="max-w-5xl h-[85vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>{caseData.pdf_file_name || `${t("pdf")} ${t("view")}`}</DialogTitle>
+              <DialogDescription>{t("pdf")}</DialogDescription>
+            </DialogHeader>
+
+            <div className="flex-1 rounded-md border bg-white">
+              {pdfLoading && <div className="h-full flex items-center justify-center text-sm text-gray-500">{t("loading")}</div>}
+              {!pdfLoading && pdfError && <div className="h-full flex items-center justify-center text-sm text-red-500">{pdfError}</div>}
+              {!pdfLoading && !pdfError && pdfObjectUrl && (
+                <iframe title="Case PDF Preview" src={pdfObjectUrl} className="w-full h-full rounded-md" />
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={closePdfModal}>{t("close") || "Kapat"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+                                        
       </div>
     </Layout>
   );
