@@ -2658,7 +2658,7 @@ const AdminPricing = () => {
       }
       setShowAdd(false);
       setEditPlan(null);
-      etFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package", billing_period: "one_time" });
+      setFormData({ name: "", credits: 10, price: 100, currency: "TRY", is_popular: false, features: "", plan_type: "package", billing_period: "one_time" });
       fetchPlans();
     } catch (error) {
       alert(error.response?.data?.detail || t("error"));
