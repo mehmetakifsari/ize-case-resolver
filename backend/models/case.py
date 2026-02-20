@@ -52,6 +52,13 @@ class IZECase(BaseModel):
     pdf_file_name: str
     pdf_storage_name: Optional[str] = None
     extracted_text: str
+
+    ai_provider: Optional[str] = None
+    ai_model: Optional[str] = None
+    ai_prompt_tokens: int = 0
+    ai_completion_tokens: int = 0
+    ai_total_tokens: int = 0
+    ai_estimated_cost_usd: Optional[float] = None
     
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     binder_version_used: str = "default"
