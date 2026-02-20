@@ -86,6 +86,7 @@ async def analyze_ize_pdf(
     api_settings = await db.api_settings.find_one({"id": "api_settings"}, {"_id": 0})
     
     analysis_result = await analyze_ize_with_ai(extracted_text, warranty_rules, contract_rules, api_settings)
+    ai_meta = analysis_result.pop("_ai_meta", {})
     analysis_result["email_subject"] = generate_email_subject(analysis_result, "tr")
     analysis_result["email_body"] = generate_email_body(analysis_result, "tr")
     
@@ -125,6 +126,12 @@ async def analyze_ize_pdf(
         pdf_file_name=file.filename,
         pdf_storage_name=pdf_storage_name,
         extracted_text=extracted_text[:2000],
+        ai_provider=ai_meta.get('provider'),
+        ai_model=ai_meta.get('model'),
+        ai_prompt_tokens=ai_meta.get('prompt_tokens', 0),
+        ai_completion_tokens=ai_meta.get('completion_tokens', 0),
+        ai_total_tokens=ai_meta.get('total_tokens', 0),
+        ai_estimated_cost_usd=ai_meta.get('estimated_cost_usd'),
         binder_version_used=warranty_rules[0].get('rule_version', 'default') if warranty_rules else "default",
         month=created_at.month,
         year=created_at.year
