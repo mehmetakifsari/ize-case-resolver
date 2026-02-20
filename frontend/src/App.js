@@ -1225,26 +1225,85 @@ const AdminSystemLogs = () => {
   const { t } = useLanguage();
   const [summary, setSummary] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, page_size: 50, total: 0, total_pages: 1 });
+  const [filters, setFilters] = useState({ level: "", event_type: "", search: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLogs();
+    fetchSummary();
   }, []);
 
-  const fetchLogs = async () => {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [summaryResponse, logsResponse] = await Promise.all([
-        axios.get(`${API}/admin/system-logs/summary`, { headers }),
-        axios.get(`${API}/admin/system-logs?limit=120`, { headers }),
-      ]);
+  useEffect(() => {
+    fetchLogs();
+  }, [pagination.page, pagination.page_size, filters.level, filters.event_type]);
 
-      setSummary(summaryResponse.data);
-      setLogs(logsResponse.data || []);
+  const fetchSummary = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/system-logs/summary`, { headers: { Authorization: `Bearer ${token}` } });
+      setSummary(response.data);
+    } catch (error) {
+      console.error("System logs özeti yüklenemedi:", error);
+    }
+  };
+
+  const fetchLogs = async (customSearch, customPage) => {
+    try {
+      const params = {
+        page: customPage || pagination.page,
+        page_size: pagination.page_size,
+      };
+      if (filters.level) params.level = filters.level;
+      if (filters.event_type) params.event_type = filters.event_type;
+      const effectiveSearch = typeof customSearch === "string" ? customSearch : filters.search;
+      if (effectiveSearch) params.search = effectiveSearch;
+
+      const response = await axios.get(`${API}/admin/system-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+
+      setLogs(response.data.items || []);
+      setPagination((prev) => ({ ...prev, ...(response.data.pagination || {}) }));
     } catch (error) {
       console.error("System logs yüklenemedi:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchLogs(filters.search, 1);
+  };
+
+  const changePageSize = (size) => {
+    setPagination((prev) => ({ ...prev, page: 1, page_size: size }));
+  };
+
+  const downloadLogs = async () => {
+    try {
+      const params = {};
+      if (filters.level) params.level = filters.level;
+      if (filters.event_type) params.event_type = filters.event_type;
+      if (filters.search) params.search = filters.search;
+
+      const response = await axios.get(`${API}/admin/system-logs/export`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+
+      const blob = new Blob([response.data.content || ""], { type: "text/plain;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = response.data.filename || "system-logs.txt";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Log indirme hatası:", error);
     }
   };
 
@@ -1254,12 +1313,15 @@ const AdminSystemLogs = () => {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">{t("systemLogs")}</h1>
           <p className="text-sm text-gray-500 mt-1">{t("systemLogsDesc")}</p>
         </div>
-        <Button variant="outline" onClick={fetchLogs}>{t("refresh")}</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { fetchSummary(); fetchLogs(); }}>{t("refresh")}</Button>
+          <Button onClick={downloadLogs}>{t("downloadTxt")}</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -1290,6 +1352,35 @@ const AdminSystemLogs = () => {
           <CardDescription>{t("recentEventsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col lg:flex-row gap-2 mb-4">
+            <Select value={filters.level || "all"} onValueChange={(value) => { setFilters((prev) => ({ ...prev, level: value === "all" ? "" : value })); setPagination((prev) => ({ ...prev, page: 1 })); }}>
+              <SelectTrigger className="w-full lg:w-48"><SelectValue placeholder={t("level")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="ERROR">ERROR</SelectItem>
+                <SelectItem value="WARNING">WARNING</SelectItem>
+                <SelectItem value="INFO">INFO</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.event_type || "all"} onValueChange={(value) => { setFilters((prev) => ({ ...prev, event_type: value === "all" ? "" : value })); setPagination((prev) => ({ ...prev, page: 1 })); }}>
+              <SelectTrigger className="w-full lg:w-56"><SelectValue placeholder={t("event")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="security_alert">security_alert</SelectItem>
+                <SelectItem value="auth_failure">auth_failure</SelectItem>
+                <SelectItem value="client_error">client_error</SelectItem>
+                <SelectItem value="server_error">server_error</SelectItem>
+                <SelectItem value="unhandled_exception">unhandled_exception</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <form className="flex gap-2 w-full" onSubmit={handleSearchSubmit}>
+              <Input value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} placeholder={t("searchLogs") + " (path, ip, method...)"} />
+              <Button type="submit" variant="outline">{t("search")}</Button>
+            </form>
+          </div>
+
           <div className="overflow-auto">
             <table className="w-full text-sm">
               <thead>
@@ -1320,11 +1411,29 @@ const AdminSystemLogs = () => {
               </tbody>
             </table>
           </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{t("rowsPerPage")}</span>
+              {[50, 100, 250].map((size) => (
+                <Button key={size} size="sm" variant={pagination.page_size === size ? "default" : "outline"} onClick={() => changePageSize(size)}>
+                  {size}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{t("page")}: {pagination.page} / {pagination.total_pages} ({pagination.total})</span>
+              <Button size="sm" variant="outline" disabled={pagination.page <= 1} onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}>{t("back")}</Button>
+              <Button size="sm" variant="outline" disabled={pagination.page >= pagination.total_pages} onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}>{t("next")}</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </AdminLayout>
   );
 };
+
 
 
 const AdminUsers = () => {
