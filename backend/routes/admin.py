@@ -642,6 +642,9 @@ async def create_pricing_plan(plan_data: PricingPlanCreate, admin: dict = Depend
     plan_dict['created_at'] = plan_dict['created_at'].isoformat()
     
     await db.pricing_plans.insert_one(plan_dict)
+    # Motor/PyMongo insert işlemi sonrası sözlüğe otomatik _id (ObjectId) ekler.
+    # Bu alan JSON serialize edilemediği için response'tan temizliyoruz.
+    plan_dict.pop("_id", None)
     
     return {"message": "Plan eklendi", "plan": plan_dict}
 
