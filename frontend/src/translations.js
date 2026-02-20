@@ -194,6 +194,7 @@ export const translations = {
     originalText: "Orijinal",
     turkishTranslation: "Türkçe Çeviri",
     back: "Geri",
+    close: "Kapat",
     
     // Settings
     currentApiKeys: "Mevcut API Anahtarları",
@@ -562,6 +563,7 @@ export const translations = {
     originalText: "Original",
     turkishTranslation: "Turkish Translation",
     back: "Back",
+    close: "Close",
     
     // Settings
     currentApiKeys: "Current API Keys",
