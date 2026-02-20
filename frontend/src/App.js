@@ -3270,6 +3270,20 @@ const CaseDetail = () => {
     try { const response = await axios.get(`${API}/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } }); setCaseData(response.data); } catch (error) { navigate("/dashboard"); } finally { setLoading(false); }
   };
 
+  const openUploadedPdf = async () => {
+    try {
+      const response = await axios.get(`${API}/cases/${caseId}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob"
+      });
+      const fileUrl = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 60_000);
+    } catch (error) {
+      console.error("PDF açılamadı:", error);
+    }
+  };
+                                                             
   const toggleSection = (section) => { setExpandedSections(prev => ({...prev, [section]: !prev[section]})); };
   const parseBilingualText = (value) => {
     if (!value || typeof value !== "string") return null;
@@ -3409,6 +3423,21 @@ const CaseDetail = () => {
             )}
           </Card>
 
+          {caseData.pdf_file_name && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t("pdf")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">{caseData.pdf_file_name}</p>
+                <Button variant="outline" onClick={openUploadedPdf}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  {t("view")}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+                                                     
           <Card>
             <CardHeader className="cursor-pointer" onClick={() => toggleSection('email')}>
               <div className="flex items-center justify-between"><CardTitle className="text-lg">{t("emailDraft")}</CardTitle>{expandedSections.email ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}</div>
