@@ -229,8 +229,8 @@ async def get_public_pricing_plans():
             {"id": "starter", "name": "Başlangıç", "credits": 10, "price": 100, "currency": "TRY", "is_popular": False, "features": ["10 IZE Analizi", "E-posta Desteği"], "plan_type": "package", "billing_period": "one_time"},
             {"id": "pro", "name": "Pro", "credits": 50, "price": 400, "currency": "TRY", "is_popular": True, "features": ["50 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"], "plan_type": "package", "billing_period": "one_time"},
             {"id": "enterprise", "name": "Enterprise", "credits": 200, "price": 1200, "currency": "TRY", "is_popular": False, "features": ["200 IZE Analizi", "7/24 Destek", "Özel Entegrasyon", "API Erişimi"], "plan_type": "package", "billing_period": "one_time"},
-            {"id": "sub-monthly", "name": "Abonelik Basic", "credits": 20, "price": 299, "currency": "TRY", "is_popular": False, "features": ["Aylık 20 IZE Analizi", "Öncelikli Destek"], "plan_type": "subscription", "billing_period": "monthly"},
-            {"id": "sub-yearly", "name": "Abonelik Pro", "credits": 300, "price": 2990, "currency": "TRY", "is_popular": True, "features": ["Yıllık 300 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"], "plan_type": "subscription", "billing_period": "yearly"},
+            {"id": "sub_starter", "name": "Abonelik Basic", "credits": 20, "price": 499, "currency": "TRY", "is_popular": False, "features": ["Aylık 20 IZE Analizi", "Öncelikli Destek"], "plan_type": "subscription", "billing_period": "monthly"},
+            {"id": "sub_pro", "name": "Abonelik Pro", "credits": 100, "price": 1499, "currency": "TRY", "is_popular": True, "features": ["Aylık 100 IZE Analizi", "Öncelikli Destek", "Detaylı Raporlar"], "plan_type": "subscription", "billing_period": "monthly"},
         ]
     
     return plans
@@ -246,4 +246,3 @@ async def get_public_branches():
         return [{"name": name} for name in DEFAULT_BRANCHES]
     
     return branches
-
