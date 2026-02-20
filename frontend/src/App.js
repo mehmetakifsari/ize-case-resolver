@@ -3152,7 +3152,14 @@ const UserUpload = () => {
       fetchUser();
       navigate(`/case/${response.data.id}`);
     } catch (err) {
-      setError(err.response?.data?.detail || t("error"));
+      const detail = err.response?.data?.detail;
+      const isTokenLimitError = typeof detail === "string" && detail.includes("OpenAI/Gemini token veya istek limiti aşıldı");
+
+      if (isTokenLimitError && user?.role !== "admin") {
+        setError(t("error"));
+      } else {
+        setError(detail || t("error"));
+      }
     } finally {
       setUploading(false);
     }
