@@ -969,6 +969,7 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({ rules: true, settings: false });
 
     const managementMenuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
@@ -978,8 +979,11 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/branches", icon: MapPin, label: t("branchManagement") },
     { path: "/admin/pricing", icon: DollarSign, label: t("pricingManagement") },
     { path: "/admin/payments", icon: Banknote, label: t("payments") },
-    { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
-    { path: "/admin/contract-rules", icon: FileText, label: t("contractRules") },
+  ];
+
+  const rulesMenuItems = [
+      { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
+      { path: "/admin/contract-rules", icon: FileText, label: t("contractRules") },
       ];
 
   const settingsMenuItems = [
@@ -990,12 +994,13 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/system-logs", icon: ShieldAlert, label: t("systemLogs") },
   ];
 
-  const menuSections = [
+  /*const menuSections = [
     { key: "management", label: t("managementSection"), items: managementMenuItems },
     { key: "settings", label: t("settingsSection"), items: settingsMenuItems },
-  ];
+  ];*/
   
   const isActive = (path) => location.pathname === path;
+  const toggleMenu = (menuKey) => setExpandedMenus((prev) => ({ ...prev, [menuKey]: !prev[menuKey] }));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -1016,6 +1021,88 @@ const AdminLayout = ({ children }) => {
 
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-4 space-y-2">
+@@ -944,152 +944,207 @@ const PricingPage = () => {
+          <p>{siteSettings?.footer_text || `© 2026 ${t("appName")}. ${t("allRightsReserved")}`}</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+// ==================== DASHBOARD ROUTER ====================
+
+const DashboardRouter = () => {
+  const { user } = useAuth();
+  if (!user) return null;
+  return user.role === "admin" ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/user/upload" replace />;
+};
+
+// ==================== ADMIN LAYOUT ====================
+
+const AdminLayout = ({ children }) => {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { t, siteSettings } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({ rules: true, settings: false });
+
+    const managementMenuItems = [
+  const managementMenuItems = [
+    { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
+    { path: "/user/upload", icon: Upload, label: t("izeAnalysis") },
+    { path: "/admin/users", icon: Users, label: t("users") },
+    { path: "/admin/cases", icon: List, label: t("allCases") },
+    { path: "/admin/branches", icon: MapPin, label: t("branchManagement") },
+    { path: "/admin/pricing", icon: DollarSign, label: t("pricingManagement") },
+    { path: "/admin/payments", icon: Banknote, label: t("payments") },
+  ];
+
+  const rulesMenuItems = [
+    { path: "/admin/rules", icon: FileText, label: t("warrantyRules") },
+      ];
+    { path: "/admin/contract-rules", icon: FileText, label: t("contractRules") },
+  ];
+
+  const settingsMenuItems = [
+    { path: "/admin/payment-settings", icon: CreditCard, label: t("paymentSettings") },
+    { path: "/admin/api-settings", icon: Key, label: t("apiSettings") },
+    { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
+    { path: "/admin/site-settings", icon: Settings, label: t("siteSettings") },
+    { path: "/admin/system-logs", icon: ShieldAlert, label: t("systemLogs") },
+  ];
+
+  const menuSections = [
+    { key: "management", label: t("managementSection"), items: managementMenuItems },
+    { key: "settings", label: t("settingsSection"), items: settingsMenuItems },
+  ];
+  
+  const isActive = (path) => location.pathname === path;
+  const toggleMenu = (menuKey) => setExpandedMenus((prev) => ({ ...prev, [menuKey]: !prev[menuKey] }));
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+        <button type="button" onClick={() => navigate('/admin/dashboard')} className="flex items-center gap-2 text-left">
+          {siteSettings?.site_logo_url ? (
+            <img src={siteSettings.site_logo_url} alt="Logo" className="h-6 object-contain" />
+          ) : (
+            <FileText className="w-6 h-6 text-primary" />
+          )}
+          <span className="font-bold">{t("adminPanel")}</span>
+        </div>
+        </button>
+        <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </Button>
+      </div>
+
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-white dark:bg-gray-900 border-b px-4 py-4 space-y-2">
           {menuSections.map((section) => (
             <div key={section.key} className="space-y-1">
               <p className="px-2 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -1028,6 +1115,46 @@ const AdminLayout = ({ children }) => {
               ))}
             </div>
           ))}
+          <div className="space-y-1">
+            <p className="px-2 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("managementSection")}</p>
+            {managementMenuItems.map((item) => (
+              <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                <item.icon className="w-4 h-4 mr-2" />{item.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            <Button variant="ghost" className="w-full justify-between" onClick={() => toggleMenu("rules") }>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("rulesSection")}</span>
+              {expandedMenus.rules ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+            {expandedMenus.rules && (
+              <div className="pl-3 border-l ml-2 space-y-1">
+                {rulesMenuItems.map((item) => (
+                  <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                    <item.icon className="w-4 h-4 mr-2" />{item.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Button variant="ghost" className="w-full justify-between" onClick={() => toggleMenu("settings") }>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("settingsSection")}</span>
+              {expandedMenus.settings ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+            {expandedMenus.settings && (
+              <div className="pl-3 border-l ml-2 space-y-1">
+                {settingsMenuItems.map((item) => (
+                  <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                    <item.icon className="w-4 h-4 mr-2" />{item.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
           <Separator />
           <LanguageSwitcher className="w-full justify-start" />
           <Button variant="ghost" className="w-full justify-start" onClick={toggleTheme}>
@@ -1058,20 +1185,46 @@ const AdminLayout = ({ children }) => {
             </Button>
           </div>
           <nav className="p-4 space-y-4">
-            {menuSections.map((section) => (
-              <div key={section.key} className="space-y-2">
-                {sidebarOpen && (
-                  <p className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {section.label}
-                  </p>
-                )}
-                {section.items.map((item) => (
-                  <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
-                    <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
-                  </Button>
-                ))}
-              </div>
-            ))}
+            <div className="space-y-2">
+              {sidebarOpen && <p className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("managementSection")}</p>}
+              {managementMenuItems.map((item) => (
+                <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                  <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                </Button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-between' : 'justify-center'}`} onClick={() => toggleMenu("rules")}>
+                {sidebarOpen && <span className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("rulesSection")}</span>}
+                {expandedMenus.rules ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+              {expandedMenus.rules && (
+                <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
+                  {rulesMenuItems.map((item) => (
+                    <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                      <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-between' : 'justify-center'}`} onClick={() => toggleMenu("settings")}>
+                {sidebarOpen && <span className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("settingsSection")}</span>}
+                {expandedMenus.settings ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+              {expandedMenus.settings && (
+                <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
+                  {settingsMenuItems.map((item) => (
+                    <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                      <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
             <Separator className="my-4" />
             {sidebarOpen && <LanguageSwitcher className="w-full justify-start" />}
             <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={toggleTheme}>
