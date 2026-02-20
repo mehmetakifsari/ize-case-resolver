@@ -18,7 +18,14 @@ MAX_INPUT_TOKENS_BUDGET = 3000
 PRIMARY_MAX_COMPLETION_TOKENS = 700
 FALLBACK_MAX_COMPLETION_TOKENS = 400
 GEMINI_MODEL = "gemini-1.5-flash"
+OPENAI_MODEL = "gpt-4o"
 
+
+def _attach_ai_meta(payload: Dict[str, Any], meta: Dict[str, Any]) -> Dict[str, Any]:
+    """AI sağlayıcı metriklerini payload'a ekler."""
+    enriched = dict(payload)
+    enriched["_ai_meta"] = meta
+    return enriched
 
 def _estimate_tokens(text: str) -> int:
     """Güvenli tarafta kalacak şekilde kaba token tahmini."""
@@ -317,7 +324,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
             if openai_client:
                 try:
                     response = await openai_client.chat.completions.create(
-                        model="gpt-4o",
+                        model=OPENAI_MODEL,
                         messages=[
                             {"role": "system", "content": system_message},
                             {"role": "user", "content": prompt}
@@ -328,7 +335,21 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
 
                     response_text = response.choices[0].message.content.strip()
                     clean_text = _clean_json_response_text(response_text)
-                    return json.loads(clean_text)
+                                        usage = getattr(response, "usage", None)
+                    prompt_tokens = getattr(usage, "prompt_tokens", approx_input_tokens) if usage else approx_input_tokens
+                    completion_used = getattr(usage, "completion_tokens", completion_tokens) if usage else completion_tokens
+                    total_tokens = getattr(usage, "total_tokens", prompt_tokens + completion_used) if usage else (prompt_tokens + completion_used)
+                    return _attach_ai_meta(
+                        json.loads(clean_text),
+                        {
+                            "provider": "openai",
+                            "model": OPENAI_MODEL,
+                            "prompt_tokens": int(prompt_tokens or 0),
+                            "completion_tokens": int(completion_used or 0),
+                            "total_tokens": int(total_tokens or 0),
+                            "estimated_cost_usd": round((int(prompt_tokens or 0) * 0.000005) + (int(completion_used or 0) * 0.000015), 6),
+                        },
+                    )
 
                 except RateLimitError as e:
                     last_error = e
@@ -336,11 +357,22 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                     if google_key:
                         try:
                             logger.info("Gemini fallback deneniyor (OpenAI rate limit)")
-                            return await _analyze_with_gemini(
+                            result = await _analyze_with_gemini(
                                 system_message=system_message,
                                 prompt=prompt,
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
+                            )
+                            return _attach_ai_meta(
+                                result,
+                                {
+                                    "provider": "google_gemini",
+                                    "model": GEMINI_MODEL,
+                                    "prompt_tokens": int(approx_input_tokens),
+                                    "completion_tokens": int(completion_tokens),
+                                    "total_tokens": int(approx_input_tokens + completion_tokens),
+                                    "estimated_cost_usd": None,
+                                },
                             )
                         except Exception as ge:
                             last_error = ge
@@ -352,11 +384,22 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                     if google_key:
                         try:
                             logger.info("Gemini fallback deneniyor (OpenAI genel hata)")
-                            return await _analyze_with_gemini(
+                            result = await _analyze_with_gemini(
                                 system_message=system_message,
                                 prompt=prompt,
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
+                            )
+                            return _attach_ai_meta(
+                                result,
+                                {
+                                    "provider": "google_gemini",
+                                    "model": GEMINI_MODEL,
+                                    "prompt_tokens": int(approx_input_tokens),
+                                    "completion_tokens": int(completion_tokens),
+                                    "total_tokens": int(approx_input_tokens + completion_tokens),
+                                    "estimated_cost_usd": None,
+                                },
                             )
                         except Exception as ge:
                             last_error = ge
@@ -366,11 +409,22 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
             # OpenAI yoksa doğrudan Gemini
             if google_key:
                 try:
-                    return await _analyze_with_gemini(
+                    result = await _analyze_with_gemini(
                         system_message=system_message,
                         prompt=prompt,
                         google_api_key=google_key,
                         max_output_tokens=completion_tokens,
+                    )
+                    return _attach_ai_meta(
+                        result,
+                        {
+                            "provider": "google_gemini",
+                            "model": GEMINI_MODEL,
+                            "prompt_tokens": int(approx_input_tokens),
+                            "completion_tokens": int(completion_tokens),
+                            "total_tokens": int(approx_input_tokens + completion_tokens),
+                            "estimated_cost_usd": None,
+                        },
                     )
                 except Exception as ge:
                     last_error = ge
