@@ -50,6 +50,7 @@ class IZECase(BaseModel):
     email_body: str
     
     pdf_file_name: str
+    pdf_storage_name: Optional[str] = None
     extracted_text: str
     
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
