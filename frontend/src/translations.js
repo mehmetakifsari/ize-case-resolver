@@ -137,6 +137,7 @@ export const translations = {
     socialMedia: "Sosyal Medya",
     settingsSection: "Ayarlar",
     managementSection: "Yönetim",
+    rulesSection: "Kurallar",
     
     // User Management
     userManagement: "Kullanıcı Yönetimi",
@@ -503,6 +504,7 @@ export const translations = {
     socialMedia: "Social Media",
     settingsSection: "Settings",
     managementSection: "Management",
+    rulesSection: "Rules",
     
     // User Management
     userManagement: "User Management",
