@@ -418,8 +418,9 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
                             )
-                            _enforce_contract_policy(result, pdf_text),
-                                result,
+                            parsed_payload = _enforce_contract_policy(result, pdf_text)
+                            return _attach_ai_meta(
+                                parsed_payload,
                                 {
                                     "provider": "google_gemini",
                                     "model": GEMINI_MODEL,
@@ -445,8 +446,9 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
                             )
-                            _enforce_contract_policy(result, pdf_text),
-                                result,
+                            parsed_payload = _enforce_contract_policy(result, pdf_text)
+                            return _attach_ai_meta(
+                                parsed_payload,
                                 {
                                     "provider": "google_gemini",
                                     "model": GEMINI_MODEL,
@@ -470,8 +472,9 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                         google_api_key=google_key,
                         max_output_tokens=completion_tokens,
                     )
-                    _enforce_contract_policy(result, pdf_text),
-                        result,
+                    parsed_payload = _enforce_contract_policy(result, pdf_text)
+                    return _attach_ai_meta(
+                        parsed_payload,
                         {
                             "provider": "google_gemini",
                             "model": GEMINI_MODEL,
