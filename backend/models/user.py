@@ -97,6 +97,19 @@ class UserLogin(BaseModel):
     """Login modeli"""
     email: EmailStr
     password: str
+    otp_code: Optional[str] = None
+
+    @field_validator('otp_code')
+    @classmethod
+    def validate_otp_code(cls, v):
+        if v is None:
+            return v
+        code = v.strip()
+        if not code:
+            return None
+        if not re.fullmatch(r'\d{6}', code):
+            raise ValueError('2FA kodu 6 haneli olmalıdır')
+        return code
 
 
 class Token(BaseModel):
