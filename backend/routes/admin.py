@@ -14,6 +14,7 @@ from services.auth import get_password_hash
 from services.email import test_smtp_connection
 from routes.auth import get_admin_user
 from database import db
+from pymongo.errors import DuplicateKeyError
 
 # Upload dizini - frontend/public/uploads
 UPLOAD_DIR = Path(__file__).parent.parent.parent / "frontend" / "public" / "uploads"
@@ -329,13 +330,15 @@ async def get_user_by_id(user_id: str, admin: dict = Depends(get_admin_user)):
 @router.post("/users")
 async def create_user(user_data: UserCreate, admin: dict = Depends(get_admin_user)):
     """Yeni kullanıcı oluştur (Sadece admin)"""
-    existing_user = await db.users.find_one({"email": user_data.email})
+    normalized_email = user_data.email.strip().lower()
+
+    existing_user = await db.users.find_one({"email": normalized_email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Bu email adresi zaten kayıtlı")
     
     hashed_password = get_password_hash(user_data.password)
     user = UserInDB(
-        email=user_data.email,
+        email=normalized_email,
         full_name=user_data.full_name,
         phone_number=user_data.phone_number,
         branch=user_data.branch,
@@ -346,7 +349,12 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(get_admin_use
     user_dict = user.model_dump()
     user_dict['created_at'] = user_dict['created_at'].isoformat()
     
-    await db.users.insert_one(user_dict)
+    try:
+        await db.users.insert_one(user_dict)
+    except DuplicateKeyError as exc:
+        if "email" in str(exc):
+            raise HTTPException(status_code=400, detail="Bu email adresi zaten kayıtlı") from exc
+        raise HTTPException(status_code=400, detail="Bu kullanıcı zaten kayıtlı") from exc
     
     # Şifreyi çıkar
     response = {k: v for k, v in user_dict.items() if k != 'hashed_password'}
