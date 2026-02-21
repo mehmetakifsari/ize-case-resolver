@@ -391,6 +391,9 @@ const LandingPage = () => {
               <span className="text-xl font-bold">{siteSettings?.site_name || t("appName")}</span>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/about")}> {t("aboutPage")} </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/contact")}> {t("contactPage")} </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/kvkk")}>KVKK</Button>
               <LanguageSwitcher />
               <Button variant="ghost" size="sm" onClick={toggleTheme} data-testid="theme-toggle">
                 {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -478,6 +481,11 @@ const LandingPage = () => {
             <p className="text-gray-600 dark:text-gray-400">
               {siteSettings?.footer_text || `© 2026 ${t("appName")}. ${t("allRightsReserved")}`}
             </p>
+            <div className="flex items-center gap-4 text-sm">
+              <button onClick={() => navigate("/about")} className="text-gray-600 hover:text-primary">{t("aboutPage")}</button>
+              <button onClick={() => navigate("/contact")} className="text-gray-600 hover:text-primary">{t("contactPage")}</button>
+              <button onClick={() => navigate("/kvkk")} className="text-gray-600 hover:text-primary">KVKK</button>
+            </div>
             {siteSettings?.social_media && (
               <div className="flex items-center gap-4">
                 {siteSettings.social_media.facebook && (
@@ -518,6 +526,50 @@ const LandingPage = () => {
     </div>
   );
 };
+
+const PublicContentPage = ({ pageType }) => {
+  const { t, siteSettings } = useLanguage();
+  const navigate = useNavigate();
+
+  const pageConfig = {
+    about: {
+      title: t("aboutPage"),
+      content: siteSettings?.about_content,
+      fallback: "Hakkımızda içeriği henüz eklenmedi.",
+    },
+    contact: {
+      title: t("contactPage"),
+      content: siteSettings?.contact_content,
+      fallback: "İletişim bilgileri henüz eklenmedi.",
+    },
+    kvkk: {
+      title: "KVKK",
+      content: siteSettings?.kvkk_content,
+      fallback: "KVKK metni henüz eklenmedi.",
+    },
+  };
+
+  const currentPage = pageConfig[pageType] || pageConfig.about;
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Button variant="outline" onClick={() => navigate("/")}>{t("back")}</Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>{currentPage.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+              {currentPage.content || currentPage.fallback}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
 
 // ==================== LOGIN PAGE ====================
 
@@ -2965,12 +3017,13 @@ const AdminSiteSettings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">{t("generalSettings")}</TabsTrigger>
           <TabsTrigger value="seo">{t("seoSettings")}</TabsTrigger>
           <TabsTrigger value="analytics">{t("analyticsSettings")}</TabsTrigger>
           <TabsTrigger value="contact">{t("contactSettings")}</TabsTrigger>
           <TabsTrigger value="social">{t("socialMedia")}</TabsTrigger>
+          <TabsTrigger value="pages">{t("pageSettings")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -3159,6 +3212,44 @@ const AdminSiteSettings = () => {
                 <div><Label>LinkedIn</Label><Input value={settings?.social_media?.linkedin || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, linkedin: e.target.value })} placeholder="https://linkedin.com/company/..." /></div>
                 <div><Label>YouTube</Label><Input value={settings?.social_media?.youtube || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, youtube: e.target.value })} placeholder="https://youtube.com/@..." /></div>
                 <div><Label>WhatsApp</Label><Input value={settings?.social_media?.whatsapp || ""} onChange={(e) => handleChange("social_media", { ...settings?.social_media, whatsapp: e.target.value })} placeholder="+905551234567" /></div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+                                        
+        <TabsContent value="pages">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("pageSettings")}</CardTitle>
+              <CardDescription>{t("pageSettingsDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label>{t("aboutPage")}</Label>
+                <Textarea
+                  rows={6}
+                  value={settings?.about_content || ""}
+                  onChange={(e) => handleChange("about_content", e.target.value)}
+                  placeholder="Hakkımızda metni"
+                />
+              </div>
+              <div>
+                <Label>{t("contactPage")}</Label>
+                <Textarea
+                  rows={6}
+                  value={settings?.contact_content || ""}
+                  onChange={(e) => handleChange("contact_content", e.target.value)}
+                  placeholder="İletişim metni"
+                />
+              </div>
+              <div>
+                <Label>KVKK</Label>
+                <Textarea
+                  rows={8}
+                  value={settings?.kvkk_content || ""}
+                  onChange={(e) => handleChange("kvkk_content", e.target.value)}
+                  placeholder="KVKK metni"
+                />
               </div>
             </CardContent>
           </Card>
@@ -3803,6 +3894,9 @@ function App() {
             <BrowserRouter>
               <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<PublicContentPage pageType="about" />} />
+              <Route path="/contact" element={<PublicContentPage pageType="contact" />} />
+              <Route path="/kvkk" element={<PublicContentPage pageType="kvkk" />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/pricing" element={<PricingPage />} />
