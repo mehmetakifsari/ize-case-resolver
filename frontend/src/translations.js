@@ -46,6 +46,8 @@ export const translations = {
     getStarted: "5 Ücretsiz Analiz Al",
     pricing: "Fiyatlandırma",
     features: "Özellikler",
+    aboutPage: "Hakkımızda",
+    contactPage: "İletişim",
     
     // Features
     featurePdfTitle: "PDF Analizi",
@@ -232,6 +234,8 @@ export const translations = {
     companyName: "Şirket Adı",
     footerSettings: "Footer Ayarları",
     footerText: "Footer Metni",
+    pageSettings: "Sayfa İçerikleri",
+    pageSettingsDesc: "Ön yüzdeki Hakkımızda, İletişim ve KVKK sayfalarını buradan düzenleyin.",
     settingsSaved: "Ayarlar kaydedildi",
     
     // Pricing
@@ -428,6 +432,8 @@ export const translations = {
     getStarted: "Get 5 Free Analyses",
     pricing: "Pricing",
     features: "Features",
+    aboutPage: "About",
+    contactPage: "Contact",
     
     // Features
     featurePdfTitle: "PDF Analysis",
@@ -601,6 +607,8 @@ export const translations = {
     companyName: "Company Name",
     footerSettings: "Footer Settings",
     footerText: "Footer Text",
+    pageSettings: "Page Content",
+    pageSettingsDesc: "Edit About, Contact and KVKK pages shown on the public website.",
     settingsSaved: "Settings saved",
     
     // Pricing
