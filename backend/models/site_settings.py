@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Dict
+from typing import Optional
 from datetime import datetime, timezone
 
 
@@ -44,6 +44,9 @@ class SiteSettings(BaseModel):
     contact_phone: Optional[str] = None
     company_name: Optional[str] = None
     company_address: Optional[str] = None
+    contact_form_recipient_email: Optional[str] = None
+    contact_map_embed_url: Optional[str] = None
+    contact_map_link: Optional[str] = None
     
     # Sosyal Medya
     social_facebook: Optional[str] = None
@@ -99,6 +102,9 @@ class SiteSettingsUpdate(BaseModel):
     contact_phone: Optional[str] = None
     company_name: Optional[str] = None
     company_address: Optional[str] = None
+    contact_form_recipient_email: Optional[str] = None
+    contact_map_embed_url: Optional[str] = None
+    contact_map_link: Optional[str] = None
     
     # Sosyal Medya
     social_facebook: Optional[str] = None
