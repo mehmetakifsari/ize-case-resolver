@@ -8,6 +8,17 @@ import re
 DEFAULT_BRANCHES = ["Bursa", "İzmit", "Orhanlı", "Hadımköy", "Keşan"]
 BRANCHES = DEFAULT_BRANCHES  # Geriye uyumluluk için
 
+def validate_password_rules(password: str) -> str:
+    """Şifre karmaşıklık kontrolü: 8+ karakter, büyük/küçük harf, özel karakter"""
+    if len(password) < 8:
+        raise ValueError('Şifre en az 8 karakter olmalıdır')
+    if not re.search(r'[A-Z]', password):
+        raise ValueError('Şifre en az bir büyük harf içermelidir')
+    if not re.search(r'[a-z]', password):
+        raise ValueError('Şifre en az bir küçük harf içermelidir')
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        raise ValueError('Şifre en az bir özel karakter içermelidir (!@#$%^&*(),.?":{}|<>)')
+    return password
 
 class User(BaseModel):
     """Kullanıcı modeli"""
@@ -45,17 +56,7 @@ class UserCreate(BaseModel):
     @field_validator('password')
     @classmethod
     def validate_password(cls, v):
-        """Şifre karmaşıklık kontrolü: 8+ karakter, büyük/küçük harf, özel karakter"""
-        if len(v) < 8:
-            raise ValueError('Şifre en az 8 karakter olmalıdır')
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Şifre en az bir büyük harf içermelidir')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Şifre en az bir küçük harf içermelidir')
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Şifre en az bir özel karakter içermelidir (!@#$%^&*(),.?":{}|<>)')
-        return v
-    
+
     @field_validator('full_name')
     @classmethod
     def validate_full_name(cls, v):
@@ -70,6 +71,14 @@ class UserCreate(BaseModel):
             raise ValueError(f'Geçersiz şube. Şubeler: {", ".join(BRANCHES)}')
         return v
 
+class UserPasswordUpdate(BaseModel):
+    """Kullanıcı şifre güncelleme modeli"""
+    new_password: str
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v):
+        return validate_password_rules(v)
 
 class UserUpdate(BaseModel):
     """Kullanıcı güncelleme modeli"""
