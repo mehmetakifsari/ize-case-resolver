@@ -147,8 +147,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    const response = await axios.post(`${API}/auth/login`, { email, password });
+  const login = async (email, password, otpCode = "") => {
+    const payload = { email, password };
+    if (otpCode && otpCode.trim()) {
+      payload.otp_code = otpCode.trim();
+    }
+    const response = await axios.post(`${API}/auth/login`, payload);
+    
     const { access_token, user: userData } = response.data;
     localStorage.setItem("token", access_token);
     setToken(access_token);
@@ -800,6 +805,7 @@ const PublicContentPage = ({ pageType }) => {
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
@@ -816,7 +822,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, otpCode);
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.detail || t("loginError"));
@@ -860,6 +866,19 @@ const LoginPage = () => {
                 placeholder="********"
                 data-testid="login-password"
               />
+            </div>
+            <div>
+              <Label>{t("otpCode")}</Label>
+              <Input
+                type="text"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="123456"
+                inputMode="numeric"
+                maxLength={6}
+                data-testid="login-otp"
+              />
+              <p className="text-xs text-muted-foreground mt-1">{t("otpCodeHint")}</p>
             </div>
             {error && (
               <Alert variant="destructive">
@@ -1922,13 +1941,16 @@ const AdminUsers = () => {
   };
 
   const totalEmails = users.reduce((sum, user) => sum + (user.emails_sent || 0), 0);
-
+  const otpEnabledCount = users.filter((user) => user.two_factor_enabled).length;
+  const otpDisabledCount = users.length - otpEnabledCount;
+  
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold" data-testid="admin-users-title">{t("userManagement")}</h1>
           <p className="text-sm text-gray-500 mt-1">{t("totalEmailsSent")}: <span className="font-semibold text-primary">{totalEmails}</span></p>
+          <p className="text-sm text-gray-500 mt-1">{t("otpEnabledCount")}: <span className="font-semibold text-green-600">{otpEnabledCount}</span> • {t("otpDisabledCount")}: <span className="font-semibold text-gray-700">{otpDisabledCount}</span></p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Select value={filter.branch || "all"} onValueChange={(v) => setFilter({...filter, branch: v === "all" ? "" : v})}>
@@ -1998,6 +2020,7 @@ const AdminUsers = () => {
                       <span className="font-medium">{user.full_name}</span>
                       <Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge>
                       <Badge variant={user.is_active ? "default" : "destructive"}>{user.is_active ? t("active") : t("inactive")}</Badge>
+                      <Badge variant={user.two_factor_enabled ? "default" : "secondary"}>{t("otpLabel")}: {user.two_factor_enabled ? t("otpActive") : t("otpPassive")}</Badge>
                       {user.has_unlimited_credits && <Badge className="bg-purple-100 text-purple-800"><Infinity className="w-3 h-3 mr-1" />{t("unlimited")}</Badge>}
                     </div>
                     <p className="text-sm text-gray-500">{user.email}</p>
