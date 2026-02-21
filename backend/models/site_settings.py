@@ -53,6 +53,11 @@ class SiteSettings(BaseModel):
     
     # Footer
     footer_text: str = "© 2026 IZE Case Resolver. Tüm hakları saklıdır."
+
+    # Statik Sayfalar
+    about_content: str = "Hakkımızda içeriği henüz eklenmedi."
+    contact_content: str = "İletişim içeriği henüz eklenmedi."
+    kvkk_content: str = "KVKK metni henüz eklenmedi."
     
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -103,3 +108,8 @@ class SiteSettingsUpdate(BaseModel):
     
     # Footer
     footer_text: Optional[str] = None
+
+    # Statik Sayfalar
+    about_content: Optional[str] = None
+    contact_content: Optional[str] = None
+    kvkk_content: Optional[str] = None
