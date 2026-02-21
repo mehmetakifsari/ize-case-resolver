@@ -1306,13 +1306,7 @@ const AdminDashboard = () => {
     <AdminLayout>
       <h1 className="text-2xl sm:text-3xl font-bold mb-6" data-testid="admin-dashboard-title">{t("dashboard")}</h1>
       
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <Card><CardHeader className="pb-2"><CardDescription>{t("totalUsers")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold" data-testid="stat-total-users">{analytics?.users?.total || 0}</div><p className="text-xs text-green-600">{analytics?.users?.active || 0} {t("active")}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>{t("totalCases")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold" data-testid="stat-total-cases">{analytics?.cases?.total || 0}</div><p className="text-xs text-gray-500">{analytics?.cases?.archived || 0} {t("archived")}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>{t("thisWeek")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-primary">{analytics?.cases?.recent_week || 0}</div><p className="text-xs text-gray-500">{t("newAnalyses")}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>{t("totalEmailsSent")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-blue-600" data-testid="stat-total-emails">{analytics?.total_emails_sent || 0}</div><p className="text-xs text-gray-500"><Mail className="w-3 h-3 inline mr-1" />e-posta</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>{t("warrantyCoverage")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-green-600">{analytics?.decisions?.COVERED || 0}</div><p className="text-xs text-red-500">{analytics?.decisions?.OUT_OF_COVERAGE || 0} {t("outOfCoverage")}</p></CardContent></Card>
-      </div>
+
 
       {aiAnalytics?.providers && (
         <div className="mb-8">
@@ -1334,6 +1328,14 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <Card><CardHeader className="pb-2"><CardDescription>{t("totalCases")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold" data-testid="stat-total-cases">{analytics?.cases?.total || 0}</div><p className="text-xs text-gray-500">{analytics?.cases?.archived || 0} {t("archived")}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("thisWeek")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-primary">{analytics?.cases?.recent_week || 0}</div><p className="text-xs text-gray-500">{t("newAnalyses")}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("totalEmailsSent")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-blue-600" data-testid="stat-total-emails">{analytics?.total_emails_sent || 0}</div><p className="text-xs text-gray-500"><Mail className="w-3 h-3 inline mr-1" />e-posta</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("warrantyCoverage")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-green-600">{analytics?.decisions?.COVERED || 0}</div><p className="text-xs text-red-500">{analytics?.decisions?.OUT_OF_COVERAGE || 0} {t("outOfCoverage")}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardDescription>{t("totalUsers")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold" data-testid="stat-total-users">{analytics?.users?.total || 0}</div><p className="text-xs text-green-600">{analytics?.users?.active || 0} {t("active")}</p></CardContent></Card>
+      </div>
     
       <div className="grid lg:grid-cols-2 gap-6">
         <Card><CardHeader><CardTitle className="text-lg">{t("branchDistribution")}</CardTitle></CardHeader><CardContent><div className="space-y-3">{analytics?.branches && Object.entries(analytics.branches).map(([branch, count]) => (<div key={branch} className="flex items-center justify-between"><span className="text-sm">{branch}</span><Badge variant="outline">{count}</Badge></div>))}</div></CardContent></Card>
