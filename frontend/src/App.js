@@ -634,7 +634,13 @@ const PublicContentPage = ({ pageType }) => {
 
   const renderFormattedContent = (content) => {
     const safeContent = content || currentPage.fallback;
-    const lines = safeContent.split("\n");
+    const normalizedContent = safeContent
+      .replace(/\[center\]/gi, "\n[center]\n")
+      .replace(/\[\/center\]/gi, "\n[/center]\n")
+      .replace(/\[p\]/gi, "\n[p]\n")
+      .replace(/\[\/p\]/gi, "\n[/p]\n");
+
+    const lines = normalizedContent.split("\n");
     const blocks = [];
     let paragraphLines = [];
     let centerLines = [];
@@ -667,6 +673,15 @@ const PublicContentPage = ({ pageType }) => {
         return;
       }
 
+      if (line === "[p]" || line === "[/p]") {
+        if (isCenteredBlock) {
+          pushCenteredBlock();
+        } else {
+          pushParagraphBlock();
+        }
+        return;
+      }
+      
       if (line === "---") {
         if (isCenteredBlock) {
           pushCenteredBlock();
