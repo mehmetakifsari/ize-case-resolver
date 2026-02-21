@@ -1021,7 +1021,7 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState({ rules: true, settings: false, aiReporting: true });
+  const [expandedMenus, setExpandedMenus] = useState({ rules: false, settings: false, aiReporting: false });
 
   const managementMenuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
