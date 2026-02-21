@@ -414,3 +414,62 @@ Renault Trucks Yetkili Servisleri için Garanti Analiz Sistemi
     except Exception as e:
         logger.error(f"Doğrulama e-postası gönderim hatası: {str(e)}")
         return {"success": False, "message": f"E-posta gönderilemedi: {str(e)}"}
+
+async def send_contact_form_email(
+    recipient_email: str,
+    sender_name: str,
+    sender_email: str,
+    subject: str,
+    message: str,
+) -> dict:
+    """İletişim formu mesajını SMTP ile gönder."""
+    settings = await get_email_settings()
+
+    if not settings.get("email_enabled", True):
+        return {"success": False, "message": "E-posta gönderimi devre dışı"}
+
+    if not settings.get("smtp_password"):
+        return {"success": False, "message": "SMTP şifresi ayarlanmamış"}
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"{settings.get('sender_name', 'IZE Case Resolver')} <{settings.get('sender_email', 'info@visupanel.com')}>"
+        msg['To'] = recipient_email
+        msg['Reply-To'] = sender_email
+        msg['Subject'] = f"[İletişim Formu] {subject}"
+
+        body = f"""Yeni iletişim formu mesajı alındı.
+
+Ad Soyad: {sender_name}
+E-posta: {sender_email}
+Konu: {subject}
+
+Mesaj:
+{message}
+"""
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+        smtp_host = settings.get('smtp_host', 'smtp.visupanel.com')
+        smtp_port = settings.get('smtp_port', 587)
+        smtp_user = settings.get('smtp_user', 'info@visupanel.com')
+        smtp_password = settings.get('smtp_password', '')
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(
+                settings.get('sender_email', smtp_user),
+                recipient_email,
+                msg.as_string()
+            )
+
+        return {"success": True, "message": "Mesaj başarıyla gönderildi"}
+    except Exception as e:
+        logger.error(f"İletişim formu e-postası gönderim hatası: {str(e)}")
+        return {"success": False, "message": f"E-posta gönderilemedi: {str(e)}"}
