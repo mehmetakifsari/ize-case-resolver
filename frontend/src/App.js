@@ -6,7 +6,7 @@ import {
   Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, ShieldAlert, Clock, Menu, X,
   BarChart3, Archive, ChevronDown, ChevronRight, Plus, Trash2, Edit, Eye, EyeOff,
   Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard,
-  Banknote, Infinity, UserPlus, MapPin, DollarSign, Image, Bot
+  Banknote, Infinity, UserPlus, MapPin, DollarSign, Image, Bot, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,6 +204,64 @@ const ThemeProvider = ({ children }) => {
 };
 
 const useTheme = () => useContext(ThemeContext);
+
+const normalizePhoneNumber = (phone) => {
+  if (!phone) {
+    return "";
+  }
+
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  if (!cleaned) {
+    return "";
+  }
+
+  if (cleaned.startsWith("+")) {
+    return cleaned.slice(1);
+  }
+
+  if (cleaned.startsWith("00")) {
+    return cleaned.slice(2);
+  }
+
+  if (cleaned.startsWith("0")) {
+    return `90${cleaned.slice(1)}`;
+  }
+
+  return cleaned;
+};
+
+const WhatsAppSupportButton = () => {
+  const { siteSettings } = useLanguage();
+  const location = useLocation();
+
+  const isPublicPage = ["/", "/about", "/contact", "/kvkk", "/pricing", "/login", "/register"].includes(location.pathname);
+  if (!isPublicPage) {
+    return null;
+  }
+
+  const rawPhone = process.env.REACT_APP_WHATSAPP_NUMBER || siteSettings?.contact_phone || "";
+  const phoneNumber = normalizePhoneNumber(rawPhone);
+  if (!phoneNumber) {
+    return null;
+  }
+
+  const prefilledMessage = encodeURIComponent("Merhaba, destek almak istiyorum.");
+  const whatsAppUrl = `https://wa.me/${phoneNumber}?text=${prefilledMessage}`;
+
+  return (
+    <a
+      href={whatsAppUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="WhatsApp destek hattı"
+      className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+    >
+      <MessageCircle className="h-5 w-5" />
+      <span className="hidden sm:inline">WhatsApp Destek</span>
+    </a>
+  );
+};
+
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -4078,6 +4136,7 @@ function App() {
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              <WhatsAppSupportButton />
             </BrowserRouter>
           </AuthProvider>
         </LanguageProvider>
