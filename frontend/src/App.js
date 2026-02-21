@@ -675,11 +675,6 @@ const PublicContentPage = ({ pageType }) => {
 
             {isContactPage && (
               <>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-semibold">{t("contactEmail")}:</span> {siteSettings?.contact_email || "-"}</div>
-                  <div><span className="font-semibold">{t("contactPhone")}:</span> {siteSettings?.contact_phone || "-"}</div>
-                </div>
-
                 <div className="border rounded-lg p-4 space-y-4">
                   <h3 className="text-lg font-semibold">{t("contactFormTitle")}</h3>
                   <form onSubmit={submitContactForm} className="space-y-3">
