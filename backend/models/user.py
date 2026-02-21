@@ -56,6 +56,7 @@ class UserCreate(BaseModel):
     @field_validator('password')
     @classmethod
     def validate_password(cls, v):
+        return validate_password_rules(v)
 
     @field_validator('full_name')
     @classmethod
