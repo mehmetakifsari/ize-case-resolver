@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from typing import Dict, List, Any, Tuple
+from datetime import datetime
 
 import httpx
 from fastapi import HTTPException
@@ -130,6 +131,56 @@ def _select_relevant_rules(warranty_rules: List[Dict[str, Any]], pdf_text: str) 
             "keywords": [str(k) for k in rule.get("keywords", [])[:8]],
         })
     return normalized
+def _sort_contract_rules(contract_rules: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Kontrat paketlerini küçükten büyüğe eklenme sırasına göre sıralar."""
+    def parse_created_at(rule: Dict[str, Any]) -> datetime:
+        value = rule.get("created_at")
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                return datetime.min
+        return datetime.min
+
+    return sorted(contract_rules, key=parse_created_at)
+
+
+def _is_damage_case(payload: Dict[str, Any], pdf_text: str) -> bool:
+    """Hasar/darbe/kaza benzeri durumlarda kontrat kapsamını kapat."""
+    candidate_text = " ".join([
+        str(payload.get("failure_complaint", "")),
+        str(payload.get("failure_cause", "")),
+        str(payload.get("repair_process_summary", "")),
+        str(pdf_text or ""),
+    ]).lower()
+
+    damage_markers = [
+        "hasar", "darbe", "çarp", "kaza", "accident", "collision", "impact",
+        "external damage", "fiziksel hasar", "user misuse", "kullanıcı hatası",
+    ]
+    return any(marker in candidate_text for marker in damage_markers)
+
+
+def _enforce_contract_policy(payload: Dict[str, Any], pdf_text: str) -> Dict[str, Any]:
+    """Kontrat kararını iş kurallarına göre normalize eder."""
+    normalized = dict(payload)
+
+    if _is_damage_case(normalized, pdf_text):
+        normalized["has_active_contract"] = False
+        normalized["contract_package_name"] = None
+        normalized["contract_decision"] = "NO_CONTRACT_COVERAGE"
+        normalized["contract_covered_parts"] = []
+        return normalized
+
+    if normalized.get("is_within_2_year_warranty"):
+        normalized["has_active_contract"] = False
+        normalized["contract_package_name"] = None
+        normalized["contract_decision"] = "NO_CONTRACT_COVERAGE"
+        normalized["contract_covered_parts"] = []
+
+    return normalized
 
 
 def _build_messages(
@@ -146,9 +197,10 @@ def _build_messages(
     ])
     rules_text = _trim_text(rules_text, rules_limit)
 
+    ordered_contract_rules = _sort_contract_rules(contract_rules)
     contract_text = "\n\n".join([
-        f"Paket: {rule.get('package_name', 'N/A')}\nMaddeler: {'; '.join(rule.get('items', []))}\nAnahtar: {', '.join(rule.get('keywords', []))}"
-        for rule in contract_rules[:5]
+        f"Sıra: {idx + 1}\nPaket: {rule.get('package_name', 'N/A')}\nMaddeler: {'; '.join(rule.get('items', []))}\nAnahtar: {', '.join(rule.get('keywords', []))}"
+        for idx, rule in enumerate(ordered_contract_rules[:5])
     ])
     contract_text = _trim_text(contract_text, 800)
 
@@ -211,7 +263,9 @@ JSON şeması:
 Sadece JSON ver.
 
 KONTRAT KARAR KURALI:
-- Araç 2 yıl garantide değilse ama aktif kontrat paketi ile değişen parçalar eşleşiyorsa has_active_contract=true, contract_decision=CONTRACT_COVERED yap.
+- Kontrat paketleri küçükten büyüğe sıralıdır (Sıra 1 en küçük paket).
+- Araç 2 yıl garantiyi aşıyorsa, sadece ilgili paketin maddeleriyle eşleşen parçaları kontrata dahil et.
+- Eğer hasar, darbe, kaza, kullanıcı hatası gibi durumlar varsa kontrat geçersizdir: has_active_contract=false ve contract_decision=NO_CONTRACT_COVERAGE.
 - Eşleşen parça adlarını contract_covered_parts içine ekle.
 """
 
@@ -339,8 +393,9 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                     prompt_tokens = getattr(usage, "prompt_tokens", approx_input_tokens) if usage else approx_input_tokens
                     completion_used = getattr(usage, "completion_tokens", completion_tokens) if usage else completion_tokens
                     total_tokens = getattr(usage, "total_tokens", prompt_tokens + completion_used) if usage else (prompt_tokens + completion_used)
+                    parsed_payload = _enforce_contract_policy(json.loads(clean_text), pdf_text)
                     return _attach_ai_meta(
-                        json.loads(clean_text),
+                        parsed_payload,
                         {
                             "provider": "openai",
                             "model": OPENAI_MODEL,
@@ -363,7 +418,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
                             )
-                            return _attach_ai_meta(
+                            _enforce_contract_policy(result, pdf_text),
                                 result,
                                 {
                                     "provider": "google_gemini",
@@ -390,7 +445,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                                 google_api_key=google_key,
                                 max_output_tokens=completion_tokens,
                             )
-                            return _attach_ai_meta(
+                            _enforce_contract_policy(result, pdf_text),
                                 result,
                                 {
                                     "provider": "google_gemini",
@@ -415,7 +470,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
                         google_api_key=google_key,
                         max_output_tokens=completion_tokens,
                     )
-                    return _attach_ai_meta(
+                    _enforce_contract_policy(result, pdf_text),
                         result,
                         {
                             "provider": "google_gemini",
