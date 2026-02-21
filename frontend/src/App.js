@@ -235,6 +235,46 @@ const normalizePhoneNumber = (phone) => {
   return cleaned;
 };
 
+const DAMAGE_ALERT_KEYWORDS = ["kaza", "hasar", "darbe"];
+const USER_ERROR_ALERT_KEYWORDS = [
+  "kullanıcı hatası",
+  "kullanici hatasi",
+  "kullanıcı kaynaklı",
+  "kullanici kaynakli",
+  "user error",
+  "operator error",
+];
+
+const containsAlertKeyword = (text = "", keywords = []) => {
+  const normalizedText = text.toLocaleLowerCase("tr-TR");
+  return keywords.some((keyword) => normalizedText.includes(keyword));
+};
+
+const getAnalysisAlertMessages = (caseData = {}, t) => {
+  const analysisFields = [
+    caseData.failure_complaint,
+    caseData.failure_cause,
+    caseData.repair_process_summary,
+    ...(Array.isArray(caseData.decision_rationale) ? caseData.decision_rationale : []),
+    ...(Array.isArray(caseData.operations_performed) ? caseData.operations_performed : []),
+    ...(Array.isArray(caseData.parts_replaced) ? caseData.parts_replaced : []),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const alerts = [];
+
+  if (containsAlertKeyword(analysisFields, DAMAGE_ALERT_KEYWORDS)) {
+    alerts.push(t("analysisDamageAlert"));
+  }
+
+  if (containsAlertKeyword(analysisFields, USER_ERROR_ALERT_KEYWORDS)) {
+    alerts.push(t("analysisUserErrorAlert"));
+  }
+
+  return alerts;
+};
+
 const WhatsAppSupportButton = () => {
   const { siteSettings } = useLanguage();
   const location = useLocation();
@@ -3661,6 +3701,9 @@ const UserUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+  const [alertMessages, setAlertMessages] = useState([]);
+  const [alertCaseId, setAlertCaseId] = useState("");
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const { token, user, fetchUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -3704,7 +3747,16 @@ const UserUpload = () => {
       // Kullanıcının kayıt sırasında seçtiği şube otomatik kullanılıyor (backend'de)
       const response = await axios.post(`${API}/cases/analyze`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
       fetchUser();
-      navigate(`/case/${response.data.id}`);
+      const nextCaseId = response?.data?.id;
+      const nextAlertMessages = getAnalysisAlertMessages(response?.data, t);
+
+      if (nextAlertMessages.length > 0 && nextCaseId) {
+        setAlertMessages(nextAlertMessages);
+        setAlertCaseId(nextCaseId);
+        setIsAlertModalOpen(true);
+      } else if (nextCaseId) {
+        navigate(`/case/${nextCaseId}`);
+      }
     } catch (err) {
       const detail = err.response?.data?.detail;
       const isTokenLimitError = typeof detail === "string" && detail.includes("OpenAI/Gemini token veya istek limiti aşıldı");
@@ -3719,6 +3771,13 @@ const UserUpload = () => {
     }
   };
 
+  const handleAlertModalOpenChange = (open) => {
+    setIsAlertModalOpen(open);
+    if (!open && alertCaseId) {
+      navigate(`/case/${alertCaseId}`);
+    }
+  };
+                                        
   return (
     <Layout>
       <div className="max-w-2xl mx-auto">
@@ -3754,6 +3813,28 @@ const UserUpload = () => {
             </Button>
           </form>
         </CardContent></Card>
+
+        <Dialog open={isAlertModalOpen} onOpenChange={handleAlertModalOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-amber-600">
+                <ShieldAlert className="w-5 h-5" />
+                {t("analysisAlertTitle")}
+              </DialogTitle>
+              <DialogDescription>{t("analysisAlertDescription")}</DialogDescription>
+            </DialogHeader>
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <ul className="list-disc pl-5 space-y-1">
+                {alertMessages.map((message, index) => (
+                  <li key={`${message}-${index}`}>{message}</li>
+                ))}
+              </ul>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => handleAlertModalOpenChange(false)}>{t("viewReport")}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>                                        
       </div>
     </Layout>
   );
