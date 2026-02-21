@@ -530,6 +530,8 @@ const LandingPage = () => {
 const PublicContentPage = ({ pageType }) => {
   const { t, siteSettings } = useLanguage();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const pageConfig = {
     about: {
@@ -551,6 +553,26 @@ const PublicContentPage = ({ pageType }) => {
 
   const currentPage = pageConfig[pageType] || pageConfig.about;
 
+  const handleContactFormChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const submitContactForm = async (e) => {
+    e.preventDefault();
+    setSendingMessage(true);
+    try {
+      await axios.post(`${API}/site-settings/contact-message`, formData);
+      alert(t("contactFormSuccess"));
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error) {
+      alert(error.response?.data?.detail || t("contactFormError"));
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const isContactPage = pageType === "contact";
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -559,10 +581,52 @@ const PublicContentPage = ({ pageType }) => {
           <CardHeader>
             <CardTitle>{currentPage.title}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
               {currentPage.content || currentPage.fallback}
             </p>
+
+            {isContactPage && (
+              <>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div><span className="font-semibold">{t("contactEmail")}:</span> {siteSettings?.contact_email || "-"}</div>
+                  <div><span className="font-semibold">{t("contactPhone")}:</span> {siteSettings?.contact_phone || "-"}</div>
+                </div>
+
+                <div className="border rounded-lg p-4 space-y-4">
+                  <h3 className="text-lg font-semibold">{t("contactFormTitle")}</h3>
+                  <form onSubmit={submitContactForm} className="space-y-3">
+                    <div><Label>{t("fullName")}</Label><Input value={formData.name} onChange={(e) => handleContactFormChange("name", e.target.value)} required /></div>
+                    <div><Label>{t("email")}</Label><Input type="email" value={formData.email} onChange={(e) => handleContactFormChange("email", e.target.value)} required /></div>
+                    <div><Label>{t("subject")}</Label><Input value={formData.subject} onChange={(e) => handleContactFormChange("subject", e.target.value)} required /></div>
+                    <div><Label>{t("message")}</Label><Textarea rows={5} value={formData.message} onChange={(e) => handleContactFormChange("message", e.target.value)} required /></div>
+                    <Button type="submit" disabled={sendingMessage}>{sendingMessage ? t("loading") : t("sendMessage")}</Button>
+                  </form>
+                </div>
+
+                {siteSettings?.contact_map_embed_url && (
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">{t("companyMap")}</h3>
+                    <div className="rounded-lg overflow-hidden border">
+                      <iframe
+                        title="company-map"
+                        src={siteSettings.contact_map_embed_url}
+                        className="w-full h-80"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allowFullScreen
+                      />
+                    </div>
+                    {siteSettings?.contact_map_link && (
+                      <a href={siteSettings.contact_map_link} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm">
+                        {t("openMap")}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+              
           </CardContent>
         </Card>
       </div>
@@ -3171,6 +3235,10 @@ const AdminSiteSettings = () => {
               <div><Label>{t("companyName")}</Label><Input value={settings?.company_name || ""} onChange={(e) => handleChange("company_name", e.target.value)} placeholder="Şirket Adı" /></div>
               <div><Label>{t("contactEmail")}</Label><Input type="email" value={settings?.contact_email || ""} onChange={(e) => handleChange("contact_email", e.target.value)} placeholder="info@example.com" /></div>
               <div><Label>{t("contactPhone")}</Label><Input value={settings?.contact_phone || ""} onChange={(e) => handleChange("contact_phone", e.target.value)} placeholder="+90 XXX XXX XX XX" /></div>
+
+              <div><Label>{t("contactFormRecipientEmail")}</Label><Input type="email" value={settings?.contact_form_recipient_email || ""} onChange={(e) => handleChange("contact_form_recipient_email", e.target.value)} placeholder="iletisim@example.com" /></div>
+              <div><Label>{t("googleMapsEmbedUrl")}</Label><Input value={settings?.contact_map_embed_url || ""} onChange={(e) => handleChange("contact_map_embed_url", e.target.value)} placeholder="https://www.google.com/maps/embed?..." /></div>
+              <div><Label>{t("googleMapsLink")}</Label><Input value={settings?.contact_map_link || ""} onChange={(e) => handleChange("contact_map_link", e.target.value)} placeholder="https://maps.app.goo.gl/..." /></div>
               
               {/* Banka Bilgileri */}
               <Separator className="my-6" />
