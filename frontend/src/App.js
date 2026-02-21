@@ -572,6 +572,95 @@ const PublicContentPage = ({ pageType }) => {
   };
 
   const isContactPage = pageType === "contact";
+
+
+  const renderFormattedContent = (content) => {
+    const safeContent = content || currentPage.fallback;
+    const lines = safeContent.split("\n");
+    const blocks = [];
+    let paragraphLines = [];
+    let centerLines = [];
+    let isCenteredBlock = false;
+
+    const pushParagraphBlock = () => {
+      if (!paragraphLines.length) return;
+      blocks.push({ type: "paragraph", text: paragraphLines.join("\n") });
+      paragraphLines = [];
+    };
+
+    const pushCenteredBlock = () => {
+      if (!centerLines.length) return;
+      blocks.push({ type: "center", text: centerLines.join("\n") });
+      centerLines = [];
+    };
+
+    lines.forEach((rawLine) => {
+      const line = rawLine.trim();
+
+      if (line === "[center]") {
+        pushParagraphBlock();
+        isCenteredBlock = true;
+        return;
+      }
+
+      if (line === "[/center]") {
+        pushCenteredBlock();
+        isCenteredBlock = false;
+        return;
+      }
+
+      if (line === "---") {
+        if (isCenteredBlock) {
+          pushCenteredBlock();
+        } else {
+          pushParagraphBlock();
+        }
+        blocks.push({ type: "separator" });
+        return;
+      }
+
+      if (line === "") {
+        if (isCenteredBlock) {
+          pushCenteredBlock();
+        } else {
+          pushParagraphBlock();
+        }
+        return;
+      }
+
+      if (isCenteredBlock) {
+        centerLines.push(rawLine);
+      } else {
+        paragraphLines.push(rawLine);
+      }
+    });
+
+    if (isCenteredBlock) {
+      pushCenteredBlock();
+    } else {
+      pushParagraphBlock();
+    }
+
+    return blocks.map((block, index) => {
+      if (block.type === "separator") {
+        return <Separator key={`separator-${index}`} className="my-6" />;
+      }
+
+      if (block.type === "center") {
+        return (
+          <p key={`center-${index}`} className="whitespace-pre-wrap text-center text-gray-700 dark:text-gray-300 leading-relaxed">
+            {block.text}
+          </p>
+        );
+      }
+
+      return (
+        <p key={`paragraph-${index}`} className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+          {block.text}
+        </p>
+      );
+    });
+  };
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4">
@@ -582,9 +671,7 @@ const PublicContentPage = ({ pageType }) => {
             <CardTitle>{currentPage.title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
-              {currentPage.content || currentPage.fallback}
-            </p>
+            <div className="space-y-4">{renderFormattedContent(currentPage.content)}</div>
 
             {isContactPage && (
               <>
@@ -3300,6 +3387,7 @@ const AdminSiteSettings = () => {
                   onChange={(e) => handleChange("about_content", e.target.value)}
                   placeholder="Hakkımızda metni"
                 />
+                <p className="text-xs text-gray-500 mt-1">Paragraf ayırmak için boş satır bırakın, çizgi eklemek için <code>---</code>, ortalı blok için <code>[center]</code> ve <code>[/center]</code> kullanın.</p>
               </div>
               <div>
                 <Label>{t("contactPage")}</Label>
@@ -3318,6 +3406,7 @@ const AdminSiteSettings = () => {
                   onChange={(e) => handleChange("kvkk_content", e.target.value)}
                   placeholder="KVKK metni"
                 />
+                <p className="text-xs text-gray-500 mt-1">Paragraf ayırmak için boş satır bırakın, çizgi eklemek için <code>---</code>, ortalı blok için <code>[center]</code> ve <code>[/center]</code> kullanın.</p>
               </div>
             </CardContent>
           </Card>
