@@ -77,7 +77,7 @@ async def analyze_ize_pdf(
     contract_rules = await db.contract_rules.find(
         {"is_active": True},
         {"_id": 0}
-    ).sort("created_at", -1).to_list(1000)    
+    ).sort("created_at", 1).to_list(1000)  
     
     # AI ile analiz et
     logger.info("AI analizi başlatılıyor...")
