@@ -239,7 +239,12 @@ const WhatsAppSupportButton = () => {
     return null;
   }
 
-  const rawPhone = process.env.REACT_APP_WHATSAPP_NUMBER || siteSettings?.contact_phone || "";
+    const rawPhone =
+    process.env.REACT_APP_WHATSAPP_NUMBER ||
+    siteSettings?.social_media?.whatsapp ||
+    siteSettings?.contact_phone ||
+    "";
+  
   const phoneNumber = normalizePhoneNumber(rawPhone);
   if (!phoneNumber) {
     return null;
@@ -254,7 +259,7 @@ const WhatsAppSupportButton = () => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="WhatsApp destek hattı"
-      className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+      className="fixed bottom-20 left-6 z-50 inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
     >
       <MessageCircle className="h-5 w-5" />
       <span className="hidden sm:inline">WhatsApp Destek</span>
