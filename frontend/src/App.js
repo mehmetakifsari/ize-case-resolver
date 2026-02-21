@@ -2041,13 +2041,37 @@ const AdminUsers = () => {
     e.preventDefault();
     setAddUserLoading(true);
     setAddUserError("");
-    try {
-      await axios.post(`${API}/admin/users`, newUser, { headers: { Authorization: `Bearer ${token}` } });
+    const normalizedEmail = newUser.email.trim().toLowerCase();
+
+    const completeAddUserFlow = async () => {
       setShowAddUser(false);
       setNewUser({ email: "", password: "", full_name: "", phone_number: "", branch: "", role: "user" });
-      fetchUsers();
+      await fetchUsers();
+    };
+
+    try {
+      await axios.post(`${API}/admin/users`, newUser, { headers: { Authorization: `Bearer ${token}` } });
+      await completeAddUserFlow();
     } catch (error) {
+      const statusCode = error.response?.status;
       const detail = error.response?.data?.detail;
+
+      if (statusCode && statusCode >= 500) {
+        try {
+          const response = await axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
+          const isAlreadyCreated = response.data?.some(
+            (existingUser) => (existingUser.email || "").trim().toLowerCase() === normalizedEmail
+          );
+
+          if (isAlreadyCreated) {
+            await completeAddUserFlow();
+            return;
+          }
+        } catch (verificationError) {
+          console.error("Error verifying add-user result after server error:", verificationError);
+        }
+      }
+      
       if (Array.isArray(detail)) {
         setAddUserError(detail.map(d => d.msg).join(", "));
       } else {
