@@ -37,6 +37,13 @@ export const translations = {
     loginError: "Giriş başarısız",
     registerSuccess: "Kayıt başarılı",
     invalidCredentials: "E-posta veya şifre hatalı",
+    otpCode: "2FA Kodu",
+    otpCodeHint: "Hesabınızda 2FA açıksa Google Authenticator'daki 6 haneli kodu girin",
+    otpLabel: "OTP",
+    otpActive: "Aktif",
+    otpPassive: "Pasif",
+    otpEnabledCount: "OTP Aktif Kullanıcı",
+    otpDisabledCount: "OTP Pasif Kullanıcı",
     passwordRequirements: "En az 8 karakter, büyük/küçük harf ve özel karakter içermelidir",
     
     // Landing
@@ -433,6 +440,13 @@ export const translations = {
     loginError: "Login failed",
     registerSuccess: "Registration successful",
     invalidCredentials: "Invalid email or password",
+    otpCode: "2FA Code",
+    otpCodeHint: "If 2FA is enabled, enter the 6-digit code from Google Authenticator",
+    otpLabel: "OTP",
+    otpActive: "Enabled",
+    otpPassive: "Disabled",
+    otpEnabledCount: "Users with OTP Enabled",
+    otpDisabledCount: "Users with OTP Disabled",
     passwordRequirements: "At least 8 characters, uppercase/lowercase and special character required",
     
     // Landing
