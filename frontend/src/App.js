@@ -407,7 +407,7 @@ const loadGoogleTagManager = (id) => {
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
-  const { t } = useLanguage();
+  const { pathname } = useLocation();
 
   if (loading) {
     return (
@@ -419,6 +419,14 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!user.two_factor_enabled && pathname !== "/2fa/setup") {
+    return <Navigate to="/2fa/setup" replace />;
+  }
+
+  if (user.two_factor_enabled && pathname === "/2fa/setup") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (adminOnly && user.role !== "admin") {
@@ -799,6 +807,116 @@ const PublicContentPage = ({ pageType }) => {
   );
 };
 
+// ==================== 2FA SETUP PAGE ====================
+
+const TwoFactorSetupPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [setupData, setSetupData] = useState(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const { token, fetchUser } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    initializeSetup();
+  }, []);
+
+  const initializeSetup = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.post(`${API}/auth/2fa/setup`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSetupData(response.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || t("error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const qrCodeUrl = setupData?.otpauth_url
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(setupData.otpauth_url)}`
+    : "";
+
+  const handleEnable2FA = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      await axios.post(`${API}/auth/2fa/enable`, { otp_code: otpCode.trim() }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchUser();
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.detail || t("error"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-8">
+      <Card className="w-full max-w-lg">
+        <CardHeader>
+          <CardTitle>{t("setup2faTitle")}</CardTitle>
+          <CardDescription>{t("setup2faDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>
+          ) : (
+            <>
+              {setupData?.otpauth_url && (
+                <div className="flex justify-center">
+                  <img src={qrCodeUrl} alt={t("setup2faQrAlt")} className="rounded-lg border bg-white p-2" />
+                </div>
+              )}
+              <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                <p>{t("setup2faStep1")}</p>
+                <p>{t("setup2faStep2")}</p>
+                <p>{t("setup2faStep3")}</p>
+              </div>
+              {setupData?.secret && (
+                <div className="text-xs break-all p-2 rounded bg-gray-100 dark:bg-gray-800">
+                  <strong>{t("setup2faSecretLabel")}: </strong>{setupData.secret}
+                </div>
+              )}
+              <form onSubmit={handleEnable2FA} className="space-y-3">
+                <div>
+                  <Label>{t("otpCode")}</Label>
+                  <Input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <Button type="submit" className="w-full" disabled={submitting || otpCode.length !== 6}>
+                  {submitting ? t("loading") : t("setup2faActivate")}
+                </Button>
+              </form>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 // ==================== LOGIN PAGE ====================
 
@@ -4154,6 +4272,7 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
+              <Route path="/2fa/setup" element={<PrivateRoute><TwoFactorSetupPage /></PrivateRoute>} />
               <Route path="/payment" element={<PrivateRoute><PaymentPageWrapper /></PrivateRoute>} />
               <Route path="/payment/success" element={<PrivateRoute><PaymentSuccessWrapper /></PrivateRoute>} />
               <Route path="/payment/pending" element={<PrivateRoute><PaymentPendingWrapper /></PrivateRoute>} />
