@@ -335,7 +335,7 @@ async def analyze_ize_with_ai(pdf_text: str, warranty_rules: List[Dict[str, Any]
 
                     response_text = response.choices[0].message.content.strip()
                     clean_text = _clean_json_response_text(response_text)
-                                        usage = getattr(response, "usage", None)
+                    usage = getattr(response, "usage", None)
                     prompt_tokens = getattr(usage, "prompt_tokens", approx_input_tokens) if usage else approx_input_tokens
                     completion_used = getattr(usage, "completion_tokens", completion_tokens) if usage else completion_tokens
                     total_tokens = getattr(usage, "total_tokens", prompt_tokens + completion_used) if usage else (prompt_tokens + completion_used)
