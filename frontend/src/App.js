@@ -3994,6 +3994,23 @@ const CaseDetail = () => {
     );
   };
 
+  const formatDateToDayMonthYear = (dateValue) => {
+    if (!dateValue) return "-";
+
+    const match = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, year, month, day] = match;
+      return `${day}/${month}/${year}`;
+    }
+
+    const parsedDate = new Date(dateValue);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleDateString("tr-TR");
+    }
+
+    return dateValue;
+  };
+                                        
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   if (!caseData) return null;
 
@@ -4029,7 +4046,7 @@ const CaseDetail = () => {
                   <div><span className="text-gray-500">{t("vin")}:</span> {caseData.vin}</div>
                   <div><span className="text-gray-500">{t("km")}:</span> {caseData.repair_km?.toLocaleString()}</div>
                   <div><span className="text-gray-500">{t("warrantyStart")}:</span> {caseData.warranty_start_date}</div>
-                  <div><span className="text-gray-500">{t("repairDate")}:</span> {caseData.repair_date}</div>
+                  <div><span className="text-gray-500">{t("repairDate")}:</span> {formatDateToDayMonthYear(caseData.repair_date)}</div>
                   <div><span className="text-gray-500">{t("vehicleAge")}:</span> {caseData.vehicle_age_months} {t("months")}</div>
                   {caseData.branch && <div><span className="text-gray-500">{t("branch")}:</span> {caseData.branch}</div>}
                 </div>
@@ -4049,8 +4066,10 @@ const CaseDetail = () => {
             </CardHeader>
             {expandedSections.warranty && (
               <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
                 <div><span className="text-gray-500">{t("withinWarranty")}:</span> {caseData.is_within_2_year_warranty ? <Badge className="bg-green-100 text-green-800">{t("yes")}</Badge> : <Badge className="bg-red-100 text-red-800">{t("no")}</Badge>}</div>
                 <div><span className="text-gray-500">{t("contractRules")}:</span> {caseData.has_active_contract ? <Badge className="bg-blue-100 text-blue-800">{caseData.contract_package_name || t("yes")}</Badge> : <Badge className="bg-gray-100 text-gray-700">{t("no")}</Badge>}</div>
+                </div>
                 {caseData.contract_decision === "CONTRACT_COVERED" && (
                   <div>
                     <span className="text-gray-500 block mb-2">Kontrat Kapsamındaki Parçalar:</span>
