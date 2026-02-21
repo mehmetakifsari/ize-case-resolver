@@ -184,6 +184,11 @@ export const translations = {
     analyze: "Analiz Et",
     analyzing: "Analiz ediliyor...",
     noCredits: "Ücretsiz analiz hakkınız bitti. Lütfen yönetici ile iletişime geçin.",
+    analysisAlertTitle: "Analiz Uyarısı",
+    analysisAlertDescription: "Rapor sonucunda dikkat edilmesi gereken bulgular tespit edildi.",
+    analysisDamageAlert: "Bu IZE dosyasında hasar/kaza/darbe kaynaklı bir durum tespit edildi.",
+    analysisUserErrorAlert: "Bu IZE dosyasında kullanıcı kaynaklı sorun (kullanıcı hatası) tespit edildi.",
+    viewReport: "Raporu Görüntüle",
     
     // Case Detail
     vehicleInfo: "Araç Bilgileri",
@@ -582,6 +587,11 @@ export const translations = {
     analyze: "Analyze",
     analyzing: "Analyzing...",
     noCredits: "You have no free analyses left. Please contact administrator.",
+    analysisAlertTitle: "Analysis Alert",
+    analysisAlertDescription: "Findings requiring attention were detected in the analysis result.",
+    analysisDamageAlert: "Damage/accident/impact-related findings were detected in this IZE file.",
+    analysisUserErrorAlert: "A user-induced issue (user error) was detected in this IZE file.",
+    viewReport: "View Report",
     
     // Case Detail
     vehicleInfo: "Vehicle Information",
