@@ -6,7 +6,7 @@ import uuid
 import shutil
 from pathlib import Path
 from models.user import (
-    User, UserInDB, UserCreate, UserUpdate, DEFAULT_BRANCHES,
+    User, UserInDB, UserCreate, UserUpdate, UserPasswordUpdate, DEFAULT_BRANCHES,
     Branch, BranchCreate, PricingPlan, PricingPlanCreate, PricingPlanUpdate
 )
 from models.settings import APISettings, APISettingsUpdate, EmailSettings, EmailSettingsUpdate
@@ -368,6 +368,17 @@ async def update_user(user_id: str, user_update: UserUpdate, admin: dict = Depen
     updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
     return updated_user
 
+@router.patch("/users/{user_id}/password")
+async def update_user_password(user_id: str, payload: UserPasswordUpdate, admin: dict = Depends(get_admin_user)):
+    """Kullanıcı şifresini güncelle (Sadece admin)"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    hashed = get_password_hash(payload.new_password)
+    await db.users.update_one({"id": user_id}, {"$set": {"hashed_password": hashed}})
+
+    return {"message": "Şifre güncellendi"}
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
