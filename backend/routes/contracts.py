@@ -31,7 +31,7 @@ async def create_contract_rule(rule: ContractRuleCreate, admin: dict = Depends(g
 @router.get("", response_model=List[ContractRule])
 async def get_contract_rules(active_only: bool = False):
     query = {"is_active": True} if active_only else {}
-    rules = await db.contract_rules.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    rules = await db.contract_rules.find(query, {"_id": 0}).sort("created_at", 1).to_list(1000)
 
     for rule in rules:
         if isinstance(rule.get("created_at"), str):
@@ -79,3 +79,4 @@ async def delete_contract_rule(rule_id: str, admin: dict = Depends(get_admin_use
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Kontrat kuralı bulunamadı")
     return {"message": "Kontrat kuralı silindi", "id": rule_id}
+
