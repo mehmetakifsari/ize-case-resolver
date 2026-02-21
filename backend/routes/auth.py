@@ -6,6 +6,22 @@ from services.email import send_verification_email
 from database import db
 import uuid
 from datetime import datetime, timezone, timedelta
+import pyotp
+
+
+def _build_user_response(user: dict) -> dict:
+    return {
+        "id": user['id'],
+        "email": user['email'],
+        "full_name": user['full_name'],
+        "phone_number": user.get('phone_number', ''),
+        "branch": user.get('branch', ''),
+        "role": user['role'],
+        "free_analyses_remaining": user.get('free_analyses_remaining', 0),
+        "total_analyses": user.get('total_analyses', 0),
+        "is_email_verified": user.get('is_email_verified', False),
+        "two_factor_enabled": user.get('two_factor_enabled', False)
+    }
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
@@ -84,17 +100,7 @@ async def register(user_data: UserCreate):
     # Token oluştur
     access_token = create_access_token(data={"sub": user.id, "role": user.role})
     
-    user_response = {
-        "id": user.id,
-        "email": user.email,
-        "full_name": user.full_name,
-        "phone_number": user.phone_number,
-        "branch": user.branch,
-        "role": user.role,
-        "free_analyses_remaining": user.free_analyses_remaining,
-        "total_analyses": user.total_analyses,
-        "is_email_verified": False
-    }
+    user_response = _build_user_response(user_dict)
     
     return {
         "access_token": access_token,
@@ -113,20 +119,24 @@ async def login(credentials: UserLogin):
     
     if not user.get('is_active', True):
         raise HTTPException(status_code=400, detail="Hesabınız pasif durumda. Yönetici ile iletişime geçin.")
+
+
+    if user.get('two_factor_enabled', False):
+        if not credentials.otp_code:
+            raise HTTPException(status_code=401, detail="2FA kodu gerekli")
+
+        secret = user.get('two_factor_secret')
+        if not secret:
+            raise HTTPException(status_code=400, detail="2FA yapılandırması eksik. Lütfen yönetici ile iletişime geçin.")
+
+        totp = pyotp.TOTP(secret)
+        if not totp.verify(credentials.otp_code, valid_window=1):
+            raise HTTPException(status_code=401, detail="Geçersiz 2FA kodu")
     
     # Token oluştur
     access_token = create_access_token(data={"sub": user['id'], "role": user['role']})
     
-    user_response = {
-        "id": user['id'],
-        "email": user['email'],
-        "full_name": user['full_name'],
-        "phone_number": user.get('phone_number', ''),
-        "branch": user.get('branch', ''),
-        "role": user['role'],
-        "free_analyses_remaining": user.get('free_analyses_remaining', 0),
-        "total_analyses": user.get('total_analyses', 0)
-    }
+    user_response = _build_user_response(user)
     
     return {
         "access_token": access_token,
@@ -147,10 +157,91 @@ async def get_me(current_user: dict = Depends(get_current_active_user)):
         "role": current_user['role'],
         "is_active": current_user['is_active'],
         "is_email_verified": current_user.get('is_email_verified', True),
+       "two_factor_enabled": current_user.get('two_factor_enabled', False),
         "has_unlimited_credits": current_user.get('has_unlimited_credits', False),
         "free_analyses_remaining": current_user.get('free_analyses_remaining', 0),
         "total_analyses": current_user.get('total_analyses', 0)
     }
+
+@router.post("/2fa/setup")
+async def setup_two_factor(current_user: dict = Depends(get_current_active_user)):
+    """Google Authenticator için TOTP secret üretir."""
+    secret = pyotp.random_base32()
+    issuer_name = "IZE Case Resolver"
+    account_name = current_user['email']
+    provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=account_name, issuer_name=issuer_name)
+
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {
+            "$set": {
+                "two_factor_secret": secret,
+                "two_factor_enabled": False,
+                "two_factor_setup_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+
+    return {
+        "secret": secret,
+        "otpauth_url": provisioning_uri,
+        "message": "Google Authenticator uygulamasına bu secret ile hesap ekleyin ve doğrulama kodunu gönderin."
+    }
+
+
+@router.post("/2fa/enable")
+async def enable_two_factor(payload: dict, current_user: dict = Depends(get_current_active_user)):
+    """2FA'yı doğrulama kodu ile aktif eder."""
+    otp_code = (payload.get("otp_code") or "").strip()
+    if not otp_code or not otp_code.isdigit() or len(otp_code) != 6:
+        raise HTTPException(status_code=400, detail="Geçerli 6 haneli 2FA kodu girin")
+
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0, "two_factor_secret": 1})
+    secret = user.get('two_factor_secret') if user else None
+    if not secret:
+        raise HTTPException(status_code=400, detail="Önce 2FA setup işlemini tamamlayın")
+
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(otp_code, valid_window=1):
+        raise HTTPException(status_code=400, detail="2FA doğrulama kodu hatalı")
+
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {"$set": {"two_factor_enabled": True, "two_factor_enabled_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    return {"message": "2FA başarıyla aktif edildi", "two_factor_enabled": True}
+
+
+@router.post("/2fa/disable")
+async def disable_two_factor(payload: dict, current_user: dict = Depends(get_current_active_user)):
+    """2FA'yı devre dışı bırakır (doğrulama kodu gerekir)."""
+    otp_code = (payload.get("otp_code") or "").strip()
+    if not otp_code or not otp_code.isdigit() or len(otp_code) != 6:
+        raise HTTPException(status_code=400, detail="Geçerli 6 haneli 2FA kodu girin")
+
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0, "two_factor_secret": 1})
+    secret = user.get('two_factor_secret') if user else None
+    if not secret:
+        raise HTTPException(status_code=400, detail="2FA zaten aktif değil")
+
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(otp_code, valid_window=1):
+        raise HTTPException(status_code=400, detail="2FA doğrulama kodu hatalı")
+
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {
+            "$set": {"two_factor_enabled": False},
+            "$unset": {
+                "two_factor_secret": "",
+                "two_factor_setup_at": "",
+                "two_factor_enabled_at": ""
+            }
+        }
+    )
+
+    return {"message": "2FA devre dışı bırakıldı", "two_factor_enabled": False}
 
 
 @router.get("/verify-email/{token}")
