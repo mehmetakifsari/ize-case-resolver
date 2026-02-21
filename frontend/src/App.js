@@ -2304,6 +2304,23 @@ const AdminAllCases = () => {
     return colors[decision] || "bg-gray-100 text-gray-800";
   };
 
+  const getCaseSubtitle = (caseItem) => {
+    const company = typeof caseItem?.company === "string" ? caseItem.company.trim() : "";
+    const title = typeof caseItem?.case_title === "string" ? caseItem.case_title.trim() : "";
+
+    if (!company) return title;
+    if (!title) return company;
+
+    const normalizedCompany = company.toLocaleLowerCase("tr-TR");
+    const normalizedTitle = title.toLocaleLowerCase("tr-TR");
+
+    if (normalizedTitle === normalizedCompany || normalizedTitle.startsWith(`${normalizedCompany} -`)) {
+      return title;
+    }
+
+    return `${company} - ${title}`;
+  };
+  
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -2333,7 +2350,7 @@ const AdminAllCases = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{c.ize_no}</span><Badge className={getDecisionBadge(c.warranty_decision)}>{c.warranty_decision}</Badge>{c.is_archived && <Badge variant="secondary"><Archive className="w-3 h-3 mr-1" />{t("archived")}</Badge>}</div>
-                    <p className="text-sm text-gray-500">{c.company} - {c.case_title}</p>
+                    <p className="text-sm text-gray-500">{getCaseSubtitle(c)}</p>
                     <div className="flex gap-4 text-xs text-gray-500">{c.branch && <span><Building className="w-3 h-3 inline mr-1" />{c.branch}</span>}<span>{c.created_at ? new Date(c.created_at).toLocaleDateString('tr-TR') : "-"}</span></div>
                   </div>
                   <div className="flex gap-2">
