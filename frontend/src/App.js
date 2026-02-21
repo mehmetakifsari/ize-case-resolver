@@ -6,7 +6,7 @@ import {
   Moon, Sun, Users, Key, LogOut, CreditCard, Zap, Shield, ShieldAlert, Clock, Menu, X,
   BarChart3, Archive, ChevronDown, ChevronRight, Plus, Trash2, Edit, Eye, EyeOff,
   Phone, Building, Mail, User, Lock, Globe, Search as SearchIcon, LayoutDashboard,
-  Banknote, Infinity, UserPlus, MapPin, DollarSign, Image
+  Banknote, Infinity, UserPlus, MapPin, DollarSign, Image, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -969,7 +969,7 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState({ rules: true, settings: false });
+  const [expandedMenus, setExpandedMenus] = useState({ rules: true, settings: false, aiReporting: true });
 
   const managementMenuItems = [
     { path: "/admin/dashboard", icon: BarChart3, label: t("dashboard") },
@@ -992,6 +992,14 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/email-settings", icon: Mail, label: t("emailSettings") },
     { path: "/admin/site-settings", icon: Settings, label: t("siteSettings") },
     { path: "/admin/system-logs", icon: ShieldAlert, label: t("systemLogs") },
+  ];
+
+    const aiReportingMenuItems = [
+    { path: "/admin/ai-reporting/openai", icon: Bot, label: "OpenAI" },
+    { path: "/admin/ai-reporting/google_gemini", icon: Bot, label: "Google Gemini" },
+    { path: "/admin/ai-reporting/emergent", icon: Bot, label: "Emergent" },
+    { path: "/admin/ai-reporting/anthropic_claude", icon: Bot, label: "Anthropic / Claude" },
+    { path: "/admin/ai-reporting/other", icon: Bot, label: "Diğer" },
   ];
 
   const menuSections = [
@@ -1046,6 +1054,38 @@ const AdminLayout = ({ children }) => {
             )}
           </div>
 
+          <div className="space-y-1">
+            <Button variant="ghost" className="w-full justify-between" onClick={() => toggleMenu("aiReporting") }>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI Raporlama</span>
+              {expandedMenus.aiReporting ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+            {expandedMenus.aiReporting && (
+              <div className="pl-3 border-l ml-2 space-y-1">
+                {aiReportingMenuItems.map((item) => (
+                  <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                    <item.icon className="w-4 h-4 mr-2" />{item.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+
+            <div className="space-y-2">
+              <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-between' : 'justify-center'}`} onClick={() => toggleMenu("aiReporting")}>
+                {sidebarOpen && <span className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI Raporlama</span>}
+                {expandedMenus.aiReporting ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+              {expandedMenus.aiReporting && (
+                <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
+                  {aiReportingMenuItems.map((item) => (
+                    <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                      <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
           <div className="space-y-1">
             <Button variant="ghost" className="w-full justify-between" onClick={() => toggleMenu("settings") }>
               <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("settingsSection")}</span>
@@ -1236,6 +1276,7 @@ const UserLayout = ({ children }) => {
 
 const AdminDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
+  const [aiAnalytics, setAiAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
   const { t } = useLanguage();
@@ -1244,8 +1285,12 @@ const AdminDashboard = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get(`${API}/admin/analytics`, { headers: { Authorization: `Bearer ${token}` } });
-      setAnalytics(response.data);
+      const [dashboardRes, aiRes] = await Promise.all([
+        axios.get(`${API}/admin/analytics`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/ai-analytics`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setAnalytics(dashboardRes.data);
+      setAiAnalytics(aiRes.data);
     } catch (error) {
       console.error("Analytics yüklenemedi:", error);
     } finally {
@@ -1269,6 +1314,27 @@ const AdminDashboard = () => {
         <Card><CardHeader className="pb-2"><CardDescription>{t("warrantyCoverage")}</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold text-green-600">{analytics?.decisions?.COVERED || 0}</div><p className="text-xs text-red-500">{analytics?.decisions?.OUT_OF_COVERAGE || 0} {t("outOfCoverage")}</p></CardContent></Card>
       </div>
 
+      {aiAnalytics?.providers && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">AI Raporlama Sticker</h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {Object.entries(aiAnalytics.providers).map(([providerName, stats]) => (
+              <Card key={providerName}>
+                <CardHeader className="pb-2">
+                  <CardDescription className="uppercase">{providerName}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.total_queries}</div>
+                  <p className="text-xs text-gray-500">Sorgu</p>
+                  <p className="text-xs text-gray-500">Token: {stats.total_tokens}</p>
+                  <p className="text-xs text-gray-500">Cost: ${Number(stats.total_cost_usd || 0).toFixed(4)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+    
       <div className="grid lg:grid-cols-2 gap-6">
         <Card><CardHeader><CardTitle className="text-lg">{t("branchDistribution")}</CardTitle></CardHeader><CardContent><div className="space-y-3">{analytics?.branches && Object.entries(analytics.branches).map(([branch, count]) => (<div key={branch} className="flex items-center justify-between"><span className="text-sm">{branch}</span><Badge variant="outline">{count}</Badge></div>))}</div></CardContent></Card>
         <Card><CardHeader><CardTitle className="text-lg">{t("warrantyDecisions")}</CardTitle></CardHeader><CardContent><div className="space-y-3"><div className="flex items-center justify-between"><span className="text-sm flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" />{t("covered")}</span><Badge className="bg-green-100 text-green-800">{analytics?.decisions?.COVERED || 0}</Badge></div><div className="flex items-center justify-between"><span className="text-sm flex items-center gap-2"><XCircle className="w-4 h-4 text-red-500" />{t("outOfCoverage")}</span><Badge className="bg-red-100 text-red-800">{analytics?.decisions?.OUT_OF_COVERAGE || 0}</Badge></div><div className="flex items-center justify-between"><span className="text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4 text-yellow-500" />{t("additionalInfoRequired")}</span><Badge className="bg-yellow-100 text-yellow-800">{analytics?.decisions?.ADDITIONAL_INFO_REQUIRED || 0}</Badge></div></div></CardContent></Card>
@@ -3632,6 +3698,77 @@ const EmailVerificationBanner = () => {
   );
 };
 
+const providerLabels = {
+  openai: "OpenAI",
+  google_gemini: "Google Gemini",
+  emergent: "Emergent",
+  anthropic_claude: "Anthropic / Claude",
+  other: "Diğer",
+};
+
+const AdminAIReporting = () => {
+  const { token } = useAuth();
+  const { provider = "openai" } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProviderData();
+  }, [provider]);
+
+  const fetchProviderData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/admin/ai-analytics?provider=${provider}&days=30`, { headers: { Authorization: `Bearer ${token}` } });
+      setData(response.data);
+    } catch (error) {
+      console.error("AI analytics yüklenemedi:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedStats = data?.providers?.[provider] || { total_queries: 0, total_tokens: 0, total_cost_usd: 0 };
+
+  return (
+    <AdminLayout>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">AI Raporlama - {providerLabels[provider] || provider}</h1>
+      {loading ? (
+        <div className="flex items-center justify-center h-48"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card><CardHeader className="pb-2"><CardDescription>Toplam Sorgu</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold">{selectedStats.total_queries}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Toplam Token</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold">{selectedStats.total_tokens}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>Tahmini Maliyet (USD)</CardDescription></CardHeader><CardContent><div className="text-3xl font-bold">${Number(selectedStats.total_cost_usd || 0).toFixed(4)}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardDescription>API Aktif</CardDescription></CardHeader><CardContent><Badge variant={data?.configured?.[provider] ? "default" : "outline"}>{data?.configured?.[provider] ? "Aktif" : "Pasif"}</Badge></CardContent></Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Son 30 Gün Trendi</CardTitle>
+              <CardDescription>Grafana benzeri zaman serisi görünümü (liste halinde)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[420px] overflow-y-auto">
+                {(data?.trend || []).length === 0 && <p className="text-sm text-muted-foreground">Veri bulunamadı.</p>}
+                {(data?.trend || []).map((item) => (
+                  <div key={item.date} className="flex items-center justify-between p-2 border rounded">
+                    <span className="font-medium">{item.date}</span>
+                    <span className="text-sm">Sorgu: {item.queries}</span>
+                    <span className="text-sm">Token: {item.tokens}</span>
+                    <span className="text-sm">Maliyet: ${Number(item.cost_usd || 0).toFixed(4)}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </AdminLayout>
+  );
+};
+                                                               
 const AdminPaymentsWrapper = () => {
   const { token } = useAuth();
   const { language, t } = useLanguage();
@@ -3687,6 +3824,7 @@ function App() {
               <Route path="/admin/payments" element={<PrivateRoute adminOnly><AdminPaymentsWrapper /></PrivateRoute>} />
               <Route path="/admin/payment-settings" element={<PrivateRoute adminOnly><PaymentSettingsWrapper /></PrivateRoute>} />
               <Route path="/admin/system-logs" element={<PrivateRoute adminOnly><AdminSystemLogs /></PrivateRoute>} />
+              <Route path="/admin/ai-reporting/:provider" element={<PrivateRoute adminOnly><AdminAIReporting /></PrivateRoute>} />
               <Route path="/user/upload" element={<PrivateRoute><UserUpload /></PrivateRoute>} />
               <Route path="/user/cases" element={<PrivateRoute><UserCases /></PrivateRoute>} />
               <Route path="/case/:id" element={<PrivateRoute><CaseDetail /></PrivateRoute>} />
