@@ -1121,22 +1121,6 @@ const AdminLayout = ({ children }) => {
               </div>
             )}
           </div>
-
-            <div className="space-y-2">
-              <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-between' : 'justify-center'}`} onClick={() => toggleMenu("aiReporting")}>
-                {sidebarOpen && <span className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI Raporlama</span>}
-                {expandedMenus.aiReporting ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </Button>
-              {expandedMenus.aiReporting && (
-                <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
-                  {aiReportingMenuItems.map((item) => (
-                    <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
-                      <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </div>
             
           <div className="space-y-1">
             <Button variant="ghost" className="w-full justify-between" onClick={() => toggleMenu("settings") }>
@@ -1200,6 +1184,22 @@ const AdminLayout = ({ children }) => {
               {expandedMenus.rules && (
                 <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
                   {rulesMenuItems.map((item) => (
+                    <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
+                      <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-between' : 'justify-center'}`} onClick={() => toggleMenu("aiReporting")}>
+                {sidebarOpen && <span className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">AI Raporlama</span>}
+                {expandedMenus.aiReporting ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+              {expandedMenus.aiReporting && (
+                <div className={`space-y-1 ${sidebarOpen ? 'ml-2 pl-3 border-l' : ''}`}>
+                  {aiReportingMenuItems.map((item) => (
                     <Button key={item.path} variant={isActive(item.path) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'}`} onClick={() => navigate(item.path)} data-testid={`nav-${item.path.split('/').pop()}`}>
                       <item.icon className="w-4 h-4" />{sidebarOpen && <span className="ml-2">{item.label}</span>}
                     </Button>
